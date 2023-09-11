@@ -3,18 +3,29 @@ GET http://localhost:7800/api/assignments HTTP/1.1
 
 
 ### get assignment by id
-GET http://localhost:7800/api/assignments/4 HTTP/1.1
+GET http://localhost:7800/api/assignments/0 HTTP/1.1
 
 
 ### answer assignment
-POST http://localhost:7800/api/assignments/3 HTTP/1.1
+POST http://localhost:7800/api/assignments/1 HTTP/1.1
 Content-Type: application/json
 
 {
-    "code": "hi",
-    "user_uuid": "arnel15"
+    "code": "def hello(): return 'Hello'",
+    "user_uuid": "arnel10"
 }
 
 
 ### get all answers from db
 GET http://localhost:7800/api/answers HTTP/1.1
+
+
+### grader-api
+GET http://localhost:7800/api/grade HTTP/1.1
+
+
+### check user exists 
+GET http://localhost:7800/api/user/f0aac3bd-1572-48a5-8a10-fdafbb091a67 HTTP/1.1
+
+
+

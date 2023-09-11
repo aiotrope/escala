@@ -57,7 +57,7 @@ if __name__ == '__main__':
   return await grade(code, testCode);
 };
 
-const handleRequest = async (request) => {
+const handleRequest1 = async (request) => {
   // the starting point for the grading api grades code following the
   // gradingDemo function, but does not e.g. use code from the user
   let result;
@@ -78,13 +78,57 @@ const handleRequest = async (request) => {
   // in practice, you would either send the code to grade to the grader-api
   // or use e.g. a message queue that the grader api would read and process
 
-  if (JSON.stringify(result).includes('OK')) {
-    return Response.json({ result: 'passes test' });
-  } else {
-    return Response.json({ result: 'failed test' });
-  } 
-  // return new Response(JSON.stringify({ result: result }));
+  return new Response(JSON.stringify({ result: result }));
+};
+
+const handleSample = async () => {
+  try {
+    return new Response('Hello Sample', { status: 200 });
+  } catch (err) {
+    return new Response(err.message, { status: 422 });
+  }
+};
+
+const urlMapping = [
+  {
+    method: 'POST',
+    pattern: new URLPattern({ pathname: '/' }),
+    fn: handleRequest1,
+  },
+  {
+    method: 'GET',
+    pattern: new URLPattern({ pathname: '/' }),
+    fn: handleSample,
+  },
+];
+
+const handleRequest = async (request) => {
+  const mapping = urlMapping.find(
+    (um) => um.method === request.method && um.pattern.test(request.url)
+  );
+
+  if (!mapping) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const mappingResult = mapping.pattern.exec(request.url);
+
+  try {
+    return await mapping.fn(request, mappingResult);
+  } catch (e) {
+    console.log(e);
+    return new Response(e.stack, { status: 500 });
+  }
+};
+
+const handleHttpConnection = async (conn) => {
+  for await (const requestEvent of Deno.serveHttp(conn)) {
+    requestEvent.respondWith(await handleRequest(requestEvent.request));
+  }
 };
 
 const portConfig = { port: 7001, hostname: '0.0.0.0' };
-serve(handleRequest, portConfig);
+
+for await (const conn of Deno.listen(portConfig)) {
+  handleHttpConnection(conn);
+}
