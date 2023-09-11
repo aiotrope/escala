@@ -55,7 +55,6 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
   }
 };
 
-
 const handleGrading = async (request, urlPatternResult) => {
   try {
     const body = await request.text();
@@ -107,17 +106,16 @@ const handleUpdateUserSubmission = async (request, urlPatternResult) => {
     const body = await request.text();
     const json = await JSON.parse(body);
 
-    const userSubmission =
-      await programmingAssignmentService.updateUserSubmission(
-        programming_assignment_id,
-        user_uuid,
-        json?.grader_feedback,
-        json?.status,
-        json?.correct
-      );
+    await programmingAssignmentService.updateUserSubmission(
+      programming_assignment_id,
+      user_uuid,
+      json.grader_feedback,
+      json?.status,
+      json?.correct
+    );
 
-    return Response.json(userSubmission, { status: 200 });
-  } catch (error) {
+    return Response.json(json, { status: 200 });
+  } catch (err) {
     return new Response(err.message, { status: 400 });
   }
 };
@@ -186,9 +184,10 @@ const urlMapping = [
     fn: handleCheckUserExists,
   },
   {
-    method: 'PUT',
+    method: 'PATCH',
     pattern: new URLPattern({
-      pathname: '/submissions/:programming_assignment_id/:user_uuid',
+      pathname:
+        '/assignments/submissions/:programming_assignment_id/:user_uuid',
     }),
     fn: handleUpdateUserSubmission,
   },

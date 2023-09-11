@@ -37,7 +37,7 @@
       code: code,
     };
 
-    const options = {
+    const createOptions = {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: {
@@ -51,7 +51,7 @@
     let url = `/api/assignments/${idx}`;
 
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, createOptions);
 
       if (response.status !== 201) {
         throw new Error(`${response.status} - ${response.statusText}`);
@@ -70,7 +70,7 @@
       });
 
       if (jsonData) {
-        const options = {
+        const gradeOptions = {
           method: 'POST',
           body: JSON.stringify(payload),
           headers: {
@@ -81,11 +81,38 @@
 
         const gradingUrl = `/api/assignments/grading/${idx}`;
 
-        const gradingResponse = await fetch(gradingUrl, options);
+        const gradingResponse = await fetch(gradingUrl, gradeOptions);
 
         const jsonResponse = await gradingResponse.json();
 
-        console.log('RESULT', jsonResponse?.result);
+        // console.log('RESULT', jsonResponse?.result);
+
+        if (jsonResponse?.result) {
+          const updateUrl = `/api/assignments/submissions/${idx}/${$userUuid}`;
+
+          const updatePayload = {
+            grader_feedback: jsonResponse?.result,
+            status: 'processed',
+            correct: jsonResponse?.result === 'passes test' ? true : false,
+          };
+
+          const updateOptions = {
+            method: 'PATCH',
+            body: JSON.stringify(updatePayload),
+            headers: {
+              Accept: 'application/json',
+              'Content-type': 'application/json',
+            },
+          };
+
+          const updateResponse = await fetch(updateUrl, updateOptions);
+
+          const json = await updateResponse.json();
+
+          console.log('RESULT', json);
+
+          return json;
+        }
 
         return jsonResponse;
       }
