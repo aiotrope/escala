@@ -116,7 +116,13 @@ const handleUpdateUserSubmission = async (request, urlPatternResult) => {
       json?.score
     );
 
-    return Response.json(json, { status: 200 });
+    const submission =
+      await programmingAssignmentService.findUserLatestSubmission(
+        programming_assignment_id,
+        user_uuid
+      );
+
+    return Response.json(submission[0], { status: 200 });
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }
@@ -126,8 +132,8 @@ const handleCheckUserExists = async (_request, urlPatternResult) => {
   const user_uuid = urlPatternResult.pathname.groups.user_uuid;
 
   try {
-    const user = await programmingAssignmentService.checkUserExists(user_uuid);
-    return Response.json(user[0], { status: 200 });
+    const exists = await programmingAssignmentService.checkUserExists(user_uuid);
+    return Response.json(exists[0], { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 422 });
   }

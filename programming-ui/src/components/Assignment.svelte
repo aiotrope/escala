@@ -6,7 +6,8 @@
     assignments,
     submissions,
     userGrades,
-  } from '../stores/store.js';
+    userOnDb,
+  } from '../stores/stores.js';
 
   import assignmentService from '../services/assignmentService.js';
 
@@ -15,6 +16,12 @@
   let code;
 
   let submissionsContent;
+
+  let userOnDbContent;
+
+  //* TODO edit the userOnDb store
+
+  $: sample = $userOnDb
 
   const submitAnswer = async () =>
     await assignmentService.createAnswer(
@@ -50,7 +57,7 @@
 
       const jsonData = await response.json();
 
-      if (jsonData?.result) {
+      if (jsonData?.result && userOnDb?.exists) {
         const updateUrl = `/api/assignments/submissions/${assignmentOrder}/${$userUuid}`;
 
         const updatePayload = {
@@ -90,6 +97,8 @@
 
         code = '';
 
+        console.log(json)
+
         return json;
       }
     } catch (error) {
@@ -103,12 +112,20 @@
     gradeUserAnswer();
   });
 
+  let unsubscribeUserOnDB = userOnDb.subscribe((currentValue) => {
+    userOnDbContent = currentValue;
+  });
+
   const updateIndex = () => {
     assignmentIndex++;
     assignmentIndex %= $assignments.length;
   };
 
+  
+
   onDestroy(unsubscribeSubmission);
+
+  onDestroy(unsubscribeUserOnDB);
 </script>
 
 <div class="md:w-2/5">
@@ -163,12 +180,13 @@
     </form>
   </div>
   <div class="my-10">
-    {#if $userGrades?.length}
+    {sample?.exists}
+    {#if $userGrades?.length && $userOnDb?.exists}
       <ul>
         {#each $userGrades as data}
           <li>
-            {#if data?.submissionId}
-              {data?.submissionId} - {data?.assignmentId} - {data?.score} - {data?.correct
+            {#if data?.id}
+              {data?.id} - {data?.programming_assignment_id} - {data?.score} - {data?.correct
                 ? 'Correct'
                 : 'Incorrect'}
             {/if}
@@ -176,7 +194,9 @@
         {/each}
       </ul>
     {:else}
-      <p>Error loading data</p>
+      <p>
+        There are {$assignments.length} Python problem sets needed to be answered.
+      </p>
     {/if}
   </div>
 </div>

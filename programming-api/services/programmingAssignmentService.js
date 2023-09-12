@@ -13,10 +13,8 @@ const findOne = async (id) => {
 };
 
 const answerAssignment = async (programming_assignment_id, code, user_uuid) => {
-  
   await sql`INSERT INTO programming_assignment_submissions (programming_assignment_id, code, user_uuid) 
-  VALUES (${programming_assignment_id}, ${code}, ${user_uuid});`
-  
+  VALUES (${programming_assignment_id}, ${code}, ${user_uuid});`;
 };
 
 const findUserLatestSubmission = async (
@@ -35,8 +33,7 @@ const findSubmissionById = async (submissionId) => {
     await sql`select * from programming_assignment_submissions where id=${submissionId};`;
 
   return submissions[0];
-
-}
+};
 
 const getAllAnswers = async () => {
   const answers = await sql`SELECT * FROM programming_assignment_submissions;`;
@@ -80,5 +77,5 @@ export {
   checkUserExists,
   updateUserSubmission,
   findUserLatestSubmission,
-  findSubmissionById
+  findSubmissionById,
 };

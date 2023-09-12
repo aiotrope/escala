@@ -82,10 +82,29 @@ const getSubmission = async (submissionId) => {
   }
 };
 
+const checkUserExists = async (exists, uuid) => {
+  try {
+    const response = await fetch(`http://localhost:7800/api/user/${uuid}`);
+
+    if (!response.ok) {
+      throw new Error(`${response.status} - ${response.statusText}`);
+    }
+
+    const jsonData = await response.json();
+
+    exists.set(jsonData);
+
+    return exists;
+  } catch (error) {
+    alert(error);
+  }
+};
+
 const assignmentService = {
   getAllAssignments,
   createAnswer,
   getSubmission,
+  checkUserExists,
 };
 
 export default assignmentService;

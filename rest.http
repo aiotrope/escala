@@ -25,20 +25,21 @@ GET http://localhost:7800/api/grade HTTP/1.1
 
 
 ### check user exists 
-GET http://localhost:7800/api/user/2919eb35-9e8e-40ea-a05e-119a426946f6 HTTP/1.1
+GET http://localhost:7800/api/user/f9d15076-bc40-4cdf-874d-af8b259667d4 HTTP/1.1
 
 
 
 ### update submission
-PATCH http://localhost:7800/api/assignments/submissions/1/arnel27 HTTP/1.1
+PATCH http://localhost:7800/api/assignments/submissions/1/76027110-d507-4aac-89a6-f6c6b45f5a25 HTTP/1.1
 Content-Type: application/json
 
 
 {
     "grader_feedback": "passes test",
     "status": "processed",
-    "correct": true
+    "correct": true,
+    "score": 100
 }
 
-### user total score
+### get submission by Id
 GET http://localhost:7800/api/assignments/submissions/1
