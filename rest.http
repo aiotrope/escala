@@ -3,7 +3,7 @@ GET http://localhost:7800/api/assignments HTTP/1.1
 
 
 ### get assignment by id
-GET http://localhost:7800/api/assignments/0 HTTP/1.1
+GET http://localhost:7800/api/assignments/2 HTTP/1.1
 
 
 ### answer assignment
@@ -25,7 +25,7 @@ GET http://localhost:7800/api/grade HTTP/1.1
 
 
 ### check user exists 
-GET http://localhost:7800/api/user/f0aac3bd-1572-48a5-8a10-fdafbb091a67 HTTP/1.1
+GET http://localhost:7800/api/user/2919eb35-9e8e-40ea-a05e-119a426946f6 HTTP/1.1
 
 
 
@@ -40,3 +40,5 @@ Content-Type: application/json
     "correct": true
 }
 
+### user total score
+GET http://localhost:7800/api/assignments/submissions/1

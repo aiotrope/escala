@@ -1,5 +1,6 @@
 import { readable, writable } from 'svelte/store';
-// import { setContext } from 'svelte';
+
+import assignmentService from '../services/assignmentService';
 
 let user = localStorage.getItem('userUuid');
 
@@ -8,23 +9,16 @@ if (!user) {
   localStorage.setItem('userUuid', user);
 }
 
+const userUuid = readable(user);
 
+let assignmentList = [];
 
-//
+const assignments = writable(assignmentList);
 
-let assignment = writable({});
+let submissions = writable([]);
 
-let assignmentIdsOrOrdering = writable([]);
+let userGrades = writable([]);
 
-let assignments = writable([]);
+assignmentService.getAllAssignments(assignments);
 
-let userExists = writable({});
-
-export const userUuid = readable(user);
-
-export {
-  assignment,
-  userExists,
-  assignmentIdsOrOrdering,
-  assignments,
-};
+export { userUuid, assignments, submissions, userGrades };

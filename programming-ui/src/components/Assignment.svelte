@@ -1,43 +1,35 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onDestroy } from 'svelte';
+
   import {
     userUuid,
     assignments,
-    assignmentsOrdering,
     submissions,
-  } from '../stores/assignments.js';
+    userGrades,
+  } from '../stores/store.js';
+
+  import assignmentService from '../services/assignmentService.js';
 
   let assignmentIndex = 0;
 
   let code;
 
-  onMount(async () => {
-    try {
-      const response = await fetch('/api/assignments');
+  let submissionsContent;
 
-      if (!response.ok) {
-        throw new Error(`${response.status} - ${response.statusText}`);
-      }
+  const submitAnswer = async () =>
+    await assignmentService.createAnswer(
+      $userUuid,
+      code,
+      assignmentIndex,
+      submissions
+    );
 
-      const jsonData = await response.json();
-
-      const ids = jsonData.map((json) => parseInt(json.id));
-
-      assignments.set(jsonData);
-
-      assignmentsOrdering.set(ids);
-    } catch (error) {
-      alert(error);
-    }
-  });
-
-  const submitAnswer = async () => {
+  const gradeUserAnswer = async () => {
     const payload = {
-      user_uuid: $userUuid,
       code: code,
     };
 
-    const createOptions = {
+    const options = {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: {
@@ -46,86 +38,77 @@
       },
     };
 
-    let idx = assignmentIndex + 1;
-
-    let url = `/api/assignments/${idx}`;
-
     try {
-      const response = await fetch(url, createOptions);
+      let assignmentOrder = assignmentIndex + 1;
 
-      if (response.status !== 201) {
+      const url = `/api/assignments/grading/${assignmentOrder}`;
+
+      const response = await fetch(url, options);
+
+      if (!response.ok)
         throw new Error(`${response.status} - ${response.statusText}`);
-      }
 
       const jsonData = await response.json();
 
-      code = '';
+      if (jsonData?.result) {
+        const updateUrl = `/api/assignments/submissions/${assignmentOrder}/${$userUuid}`;
 
-      // console.log('BODY', payload);
-      // console.log('RESULT OF TEST', jsonData);
+        const updatePayload = {
+          grader_feedback: jsonData?.result,
+          status: jsonData?.result ? 'processed' : 'pending',
+          correct: jsonData?.result === 'passes test' ? true : false,
+          score: jsonData?.result === 'passes test' ? 100 : 0,
+        };
 
-      submissions.update((currentData) => {
-        currentData.push(jsonData);
-        return currentData;
-      });
-
-      if (jsonData) {
-        const gradeOptions = {
-          method: 'POST',
-          body: JSON.stringify(payload),
+        const updateOptions = {
+          method: 'PATCH',
+          body: JSON.stringify(updatePayload),
           headers: {
             Accept: 'application/json',
             'Content-type': 'application/json',
           },
         };
 
-        const gradingUrl = `/api/assignments/grading/${idx}`;
+        const updateResponse = await fetch(updateUrl, updateOptions);
 
-        const gradingResponse = await fetch(gradingUrl, gradeOptions);
+        const json = await updateResponse.json();
 
-        const jsonResponse = await gradingResponse.json();
+        let latestUserSubmission = $submissions.find(
+          (sub) => sub.programming_assignment_id === assignmentOrder
+        );
 
-        // console.log('RESULT', jsonResponse?.result);
+        let data = {
+          ...json,
+          submissionId: latestUserSubmission?.id,
+          assignmentId: assignmentOrder,
+        };
 
-        if (jsonResponse?.result) {
-          const updateUrl = `/api/assignments/submissions/${idx}/${$userUuid}`;
+        userGrades.update((currentData) => {
+          currentData.push(data);
+          return currentData;
+        });
 
-          const updatePayload = {
-            grader_feedback: jsonResponse?.result,
-            status: 'processed',
-            correct: jsonResponse?.result === 'passes test' ? true : false,
-          };
+        code = '';
 
-          const updateOptions = {
-            method: 'PATCH',
-            body: JSON.stringify(updatePayload),
-            headers: {
-              Accept: 'application/json',
-              'Content-type': 'application/json',
-            },
-          };
-
-          const updateResponse = await fetch(updateUrl, updateOptions);
-
-          const json = await updateResponse.json();
-
-          console.log('RESULT', json);
-
-          return json;
-        }
-
-        return jsonResponse;
+        return json;
       }
-      return jsonData;
-    } catch (err) {
-      alert(err);
+    } catch (error) {
+      alert(error);
     }
   };
+
+  let unsubscribeSubmission = submissions.subscribe((currentValue) => {
+    //* run the the function after successive submissions store update
+    submissionsContent = currentValue;
+    gradeUserAnswer();
+  });
 
   const updateIndex = () => {
     assignmentIndex++;
     assignmentIndex %= $assignments.length;
   };
+
+  onDestroy(unsubscribeSubmission);
 </script>
 
 <div class="md:w-2/5">
@@ -180,11 +163,15 @@
     </form>
   </div>
   <div class="my-10">
-    {#if $submissions?.length}
+    {#if $userGrades?.length}
       <ul>
-        {#each $submissions as data (data?.id)}
+        {#each $userGrades as data}
           <li>
-            {data?.id} - {data?.programming_assignment_id} - {data?.user_uuid}
+            {#if data?.submissionId}
+              {data?.submissionId} - {data?.assignmentId} - {data?.score} - {data?.correct
+                ? 'Correct'
+                : 'Incorrect'}
+            {/if}
           </li>
         {/each}
       </ul>

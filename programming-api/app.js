@@ -41,10 +41,11 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
         json.user_uuid
       );
 
-      const submission = await programmingAssignmentService.findNewSubmission(
-        programming_assignment_id,
-        json.user_uuid
-      );
+      const submission =
+        await programmingAssignmentService.findUserLatestSubmission(
+          programming_assignment_id,
+          json.user_uuid
+        );
 
       return Response.json(submission[0], { status: 201 });
     } else {
@@ -111,7 +112,8 @@ const handleUpdateUserSubmission = async (request, urlPatternResult) => {
       user_uuid,
       json.grader_feedback,
       json?.status,
-      json?.correct
+      json?.correct,
+      json?.score
     );
 
     return Response.json(json, { status: 200 });
@@ -126,6 +128,21 @@ const handleCheckUserExists = async (_request, urlPatternResult) => {
   try {
     const user = await programmingAssignmentService.checkUserExists(user_uuid);
     return Response.json(user[0], { status: 200 });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 422 });
+  }
+};
+
+const handleFindSubmission = async (request, urlPatternResult) => {
+  try {
+    const id = urlPatternResult.pathname.groups.id;
+    const submission = await programmingAssignmentService.findSubmissionById(
+      id
+    );
+
+    console.log(submission);
+
+    return Response.json(submission, { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 422 });
   }
@@ -190,6 +207,13 @@ const urlMapping = [
         '/assignments/submissions/:programming_assignment_id/:user_uuid',
     }),
     fn: handleUpdateUserSubmission,
+  },
+  {
+    method: 'GET',
+    pattern: new URLPattern({
+      pathname: '/assignments/submissions/:id',
+    }),
+    fn: handleFindSubmission,
   },
 ];
 
