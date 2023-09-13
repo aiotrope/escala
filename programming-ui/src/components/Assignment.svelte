@@ -15,20 +15,19 @@
 
   let code;
 
-  let submissionsContent;
+  let currentSubmissionsStore;
 
-  let userOnDbContent;
+  let currentUserOnDBStore;
 
   //* TODO edit the userOnDb store
-
-  $: sample = $userOnDb
 
   const submitAnswer = async () =>
     await assignmentService.createAnswer(
       $userUuid,
       code,
       assignmentIndex,
-      submissions
+      submissions,
+      userOnDb
     );
 
   const gradeUserAnswer = async () => {
@@ -57,7 +56,7 @@
 
       const jsonData = await response.json();
 
-      if (jsonData?.result && userOnDb?.exists) {
+      if (jsonData?.result && currentUserOnDBStore?.exists) {
         const updateUrl = `/api/assignments/submissions/${assignmentOrder}/${$userUuid}`;
 
         const updatePayload = {
@@ -97,7 +96,7 @@
 
         code = '';
 
-        console.log(json)
+        console.log(json);
 
         return json;
       }
@@ -108,20 +107,18 @@
 
   let unsubscribeSubmission = submissions.subscribe((currentValue) => {
     //* run the the function after successive submissions store update
-    submissionsContent = currentValue;
+    currentSubmissionsStore = currentValue;
     gradeUserAnswer();
   });
 
   let unsubscribeUserOnDB = userOnDb.subscribe((currentValue) => {
-    userOnDbContent = currentValue;
+    currentUserOnDBStore = currentValue;
   });
 
   const updateIndex = () => {
     assignmentIndex++;
     assignmentIndex %= $assignments.length;
   };
-
-  
 
   onDestroy(unsubscribeSubmission);
 
@@ -180,7 +177,6 @@
     </form>
   </div>
   <div class="my-10">
-    {sample?.exists}
     {#if $userGrades?.length && $userOnDb?.exists}
       <ul>
         {#each $userGrades as data}
@@ -199,4 +195,10 @@
       </p>
     {/if}
   </div>
+  {currentUserOnDBStore?.exists}
+  {#if currentSubmissionsStore?.length}
+    {#each currentSubmissionsStore as data}
+      <p>{data?.id} - {data?.grader_feedback}</p>
+    {/each}
+  {/if}
 </div>

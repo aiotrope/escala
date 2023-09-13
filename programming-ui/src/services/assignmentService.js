@@ -16,11 +16,30 @@ const getAllAssignments = async (list) => {
   }
 };
 
+const checkUserExists = async (exists, uuid) => {
+  try {
+    const response = await fetch(`/api/user/${uuid}`);
+
+    if (!response.ok) {
+      throw new Error(`${response.status} - ${response.statusText}`);
+    }
+
+    const jsonData = await response.json();
+
+    exists.set(jsonData);
+
+    return exists;
+  } catch (error) {
+    alert(error);
+  }
+};
+
 const createAnswer = async (
   userUuid,
   code,
   assignmentIndex,
-  submissionStore
+  submissionStore,
+  userOnDbStore
 ) => {
   const payload = {
     user_uuid: userUuid,
@@ -58,6 +77,10 @@ const createAnswer = async (
       return currentData;
     });
 
+    let respExists = await checkUserExists(userOnDbStore, userUuid);
+
+    userOnDbStore.update((currentData) => ({ ...currentData, ...respExists }));
+
     return jsonData;
   } catch (error) {
     alert(error);
@@ -77,24 +100,6 @@ const getSubmission = async (submissionId) => {
     const jsonData = await response.json();
 
     return jsonData;
-  } catch (error) {
-    alert(error);
-  }
-};
-
-const checkUserExists = async (exists, uuid) => {
-  try {
-    const response = await fetch(`http://localhost:7800/api/user/${uuid}`);
-
-    if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
-    }
-
-    const jsonData = await response.json();
-
-    exists.set(jsonData);
-
-    return exists;
   } catch (error) {
     alert(error);
   }
