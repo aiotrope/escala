@@ -1,6 +1,6 @@
 import { readable, writable } from 'svelte/store';
 
-// import assignmentService from '../services/assignmentService1';
+// import assignmentService from '../services/assignmentService';
 
 let user = localStorage.getItem('userUuid');
 
@@ -13,10 +13,9 @@ const userUuid = readable(user);
 
 let assignmentList = [];
 
-let userOnDb = writable({})
+let userOnDb = writable({});
 
 const assignments = writable(assignmentList);
-
 
 let submissions = writable([]);
 
@@ -24,9 +23,12 @@ let userGrades = writable([]);
 
 // assignmentService.getAllAssignments(assignments);
 
-const exists = async () =>
-  await assignmentService.checkUserExists(userOnDb, user);
+/* const exists = async () => {
+  const existence = await assignmentService.checkUserExists(user);
 
-exists()
+  userOnDb.set(existence);
+};
+
+exists(); */
 
 export { userUuid, assignments, submissions, userGrades, userOnDb };

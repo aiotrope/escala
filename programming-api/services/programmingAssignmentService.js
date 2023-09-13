@@ -7,7 +7,7 @@ const findAll = async () => {
 
 const findOne = async (id) => {
   const assignments =
-    await sql`select * from programming_assignments where id=${id};`;
+    await sql`SELECT * FROM programming_assignments WHERE id=${id};`;
 
   return assignments[0];
 };
@@ -21,16 +21,16 @@ const findUserLatestSubmission = async (
   programming_assignment_id,
   user_uuid
 ) => {
-  const submission = await sql`select * from programming_assignment_submissions 
-    where programming_assignment_id=${programming_assignment_id} and user_uuid=${user_uuid} 
-    order by last_updated DESC limit 1;`;
+  const submission = await sql`SELECT * from programming_assignment_submissions 
+    WHERE programming_assignment_id=${programming_assignment_id} AND user_uuid=${user_uuid} 
+    ORDER BY last_updated DESC limit 1;`;
 
   return submission;
 };
 
 const findSubmissionById = async (submissionId) => {
   const submissions =
-    await sql`select * from programming_assignment_submissions where id=${submissionId};`;
+    await sql`SELECT * FROM programming_assignment_submissions WHERE id=${submissionId};`;
 
   return submissions[0];
 };
@@ -42,8 +42,15 @@ const getAllAnswers = async () => {
 
 const checkUserExists = async (user_uuid) => {
   const user =
-    await sql`select exists(select 1 from programming_assignment_submissions where user_uuid=${user_uuid})`;
+    await sql`SELECT EXISTS (select 1 FROM programming_assignment_submissions WHERE user_uuid=${user_uuid})`;
   return user;
+};
+
+const getAllSubmissionsByUser = async (user_uuid) => {
+  const submissionsByUser =
+    await sql`SELECT * from programming_assignment_submissions WHERE user_uuid=${user_uuid} ORDER BY last_updated DESC;`;
+
+  return submissionsByUser;
 };
 
 const updateUserSubmission = async (
@@ -60,13 +67,13 @@ const updateUserSubmission = async (
     correct: correct,
     score: score,
   };
-  await sql`update programming_assignment_submissions set ${sql(
+  await sql`UPDATE programming_assignment_submissions SET ${sql(
     submissions,
     'grader_feedback',
     'status',
     'correct',
     'score'
-  )} where programming_assignment_id=${programming_assignment_id} and user_uuid=${user_uuid};`;
+  )} WHERE programming_assignment_id=${programming_assignment_id} AND user_uuid=${user_uuid};`;
 };
 
 export {
@@ -78,4 +85,5 @@ export {
   updateUserSubmission,
   findUserLatestSubmission,
   findSubmissionById,
+  getAllSubmissionsByUser,
 };

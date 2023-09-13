@@ -1,6 +1,7 @@
 const getAllAssignments = async () => {
   const response = await fetch('/api/assignments');
   const jsonData = await response.json();
+  // console.log(jsonData)
 
   return jsonData;
 };

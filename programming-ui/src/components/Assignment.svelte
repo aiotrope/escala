@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
   import { onDestroy } from 'svelte';
 
   import {
@@ -218,3 +218,4 @@
     {/each}
   {/if}
 </div>
+ -->

@@ -12,7 +12,7 @@ const handleFindAll = async () => {
   }
 };
 
-const handleFindOne = async (_request, urlPatternResult) => {
+const handleFindOne = async (request, urlPatternResult) => {
   const id = urlPatternResult.pathname.groups.id;
 
   try {
@@ -47,7 +47,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           json.user_uuid
         );
 
-      return Response.json(submission[0], { status: 201 });
+      return Response.json(submission[0], { status: 200 });
     } else {
       return new Response('Code field is required!', { status: 400 });
     }
@@ -68,7 +68,7 @@ const handleGrading = async (request, urlPatternResult) => {
 
     const data = {
       testCode: assignment?.test_code,
-      code: json.code,
+      code: json?.code,
     };
 
     const response = await fetch('http://grader-api:7001', {
@@ -128,11 +128,13 @@ const handleUpdateUserSubmission = async (request, urlPatternResult) => {
   }
 };
 
-const handleCheckUserExists = async (_request, urlPatternResult) => {
+const handleCheckUserExists = async (request, urlPatternResult) => {
   const user_uuid = urlPatternResult.pathname.groups.user_uuid;
 
   try {
-    const exists = await programmingAssignmentService.checkUserExists(user_uuid);
+    const exists = await programmingAssignmentService.checkUserExists(
+      user_uuid
+    );
     return Response.json(exists[0], { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 422 });
@@ -151,6 +153,19 @@ const handleFindSubmission = async (request, urlPatternResult) => {
     return Response.json(submission, { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 422 });
+  }
+};
+
+const handleSubmissionsByUser = async (request, urlPatternResult) => {
+  try {
+    const user_uuid = urlPatternResult.pathname.groups.user_uuid;
+
+    const userSubmissions =
+      await programmingAssignmentService.getAllSubmissionsByUser(user_uuid);
+
+    return Response.json(userSubmissions, { status: 200 });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 404 });
   }
 };
 
@@ -220,6 +235,13 @@ const urlMapping = [
       pathname: '/assignments/submissions/:id',
     }),
     fn: handleFindSubmission,
+  },
+  {
+    method: 'GET',
+    pattern: new URLPattern({
+      pathname: '/assignments/submissions/user/all/:user_uuid',
+    }),
+    fn: handleSubmissionsByUser,
   },
 ];
 
