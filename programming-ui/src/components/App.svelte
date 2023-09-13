@@ -57,7 +57,7 @@
     }
   });
 
-  const mountUserSubmissions = async () => {
+  onMount(async () => {
     setInterval(async () => {
       const response = await fetch(
         `/api/assignments/submissions/user/all/${$userUuid}`
@@ -70,7 +70,7 @@
 
       return data;
     }, 8000); // increase ms for testing
-  };
+  });
 
   const gradeAnswer = async () => {
     const payload = {
@@ -176,7 +176,6 @@
 
   onDestroy(unsubscribeUserGrades);
 
-  mountUserSubmissions();
 </script>
 
 <div class="md:w-2/5">
@@ -224,5 +223,4 @@
       </p>
     {/if}
   </section>
-  
 </div>
