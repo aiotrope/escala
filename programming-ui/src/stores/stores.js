@@ -1,6 +1,6 @@
 import { readable, writable } from 'svelte/store';
 
-import assignmentService from '../services/assignmentService';
+// import assignmentService from '../services/assignmentService1';
 
 let user = localStorage.getItem('userUuid');
 
@@ -22,7 +22,7 @@ let submissions = writable([]);
 
 let userGrades = writable([]);
 
-assignmentService.getAllAssignments(assignments);
+// assignmentService.getAllAssignments(assignments);
 
 const exists = async () =>
   await assignmentService.checkUserExists(userOnDb, user);

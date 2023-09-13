@@ -1,46 +1,18 @@
-const getAllAssignments = async (list) => {
-  try {
-    const response = await fetch('/api/assignments');
+const getAllAssignments = async () => {
+  const response = await fetch('/api/assignments');
+  const jsonData = await response.json();
 
-    if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
-    }
-
-    const jsonData = await response.json();
-
-    list.set(jsonData);
-
-    return jsonData;
-  } catch (error) {
-    alert(error);
-  }
+  return jsonData;
 };
 
-const checkUserExists = async (exists, uuid) => {
-  try {
-    const response = await fetch(`/api/user/${uuid}`);
+const checkUserExists = async (uuid) => {
+  const response = await fetch(`/api/user/${uuid}`);
 
-    if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
-    }
-
-    const jsonData = await response.json();
-
-    exists.set(jsonData);
-
-    return exists;
-  } catch (error) {
-    alert(error);
-  }
+  const jsonData = await response.json();
+  return jsonData;
 };
 
-const createAnswer = async (
-  userUuid,
-  code,
-  assignmentIndex,
-  submissionStore,
-  userOnDbStore
-) => {
+const createAnswer = async (userUuid, code, assignmentIndex) => {
   const payload = {
     user_uuid: userUuid,
     code: code,
@@ -59,50 +31,71 @@ const createAnswer = async (
 
   let url = `/api/assignments/${assignmentOrder}`;
 
-  try {
-    const response = await fetch(url, options);
+  const response = await fetch(url, options);
 
-    if (response.status !== 201) {
-      throw new Error(`${response.status} - ${response.statusText}`);
-    }
+  const jsonData = await response.json();
 
-    const jsonData = await response.json();
-
-    code = '';
-
-    // console.log('RESULT OF TEST', jsonData);
-
-    submissionStore.update((currentData) => {
-      currentData.push(jsonData);
-      return currentData;
-    });
-
-    let respExists = await checkUserExists(userOnDbStore, userUuid);
-
-    userOnDbStore.update((currentData) => ({ ...currentData, ...respExists }));
-
-    return jsonData;
-  } catch (error) {
-    alert(error);
-  }
+  return jsonData;
 };
 
 const getSubmission = async (submissionId) => {
-  try {
-    const response = await fetch(
-      `/api/assignments/submissions/${submissionId}`
-    );
+  const response = await fetch(`/api/assignments/submissions/${submissionId}`);
+  const jsonData = await response.json();
+  return jsonData;
+};
 
-    if (!response.ok) {
-      throw new Error(`${response.status} - ${response.statusText}`);
-    }
+const requestForGrading = async (code, assignmentIndex) => {
+  const payload = {
+    code: code,
+  };
 
-    const jsonData = await response.json();
+  const options = {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: {
+      Accept: 'application/json',
+      'Content-type': 'application/json',
+    },
+  };
 
-    return jsonData;
-  } catch (error) {
-    alert(error);
-  }
+  let assignmentOrder = assignmentIndex + 1;
+
+  const url = `/api/assignments/grading/${assignmentOrder}`;
+
+  const response = await fetch(url, options);
+
+  const jsonData = await response.json();
+  return jsonData;
+};
+
+const updateUserAssignmentSubmission = async (
+  assignmentOrder,
+  userUuid,
+  gradingResponse
+) => {
+  const url = `/api/assignments/submissions/${assignmentOrder}/${userUuid}`;
+
+  const payload = {
+    grader_feedback: gradingResponse?.result,
+    status: gradingResponse?.result ? 'processed' : 'pending',
+    correct: gradingResponse?.result === 'passes test' ? true : false,
+    score: gradingResponse?.result === 'passes test' ? 100 : 0,
+  };
+
+  const options = {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: {
+      Accept: 'application/json',
+      'Content-type': 'application/json',
+    },
+  };
+
+  const response = await fetch(url, options);
+
+  const jsonData = await response.json();
+
+  return jsonData;
 };
 
 const assignmentService = {
@@ -110,6 +103,8 @@ const assignmentService = {
   createAnswer,
   getSubmission,
   checkUserExists,
+  requestForGrading,
+  updateUserAssignmentSubmission,
 };
 
 export default assignmentService;

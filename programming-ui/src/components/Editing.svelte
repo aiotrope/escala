@@ -1,5 +1,5 @@
 <script>
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
 
   import {
     userUuid,
@@ -9,7 +9,7 @@
     userOnDb,
   } from '../stores/stores.js';
 
-  import assignmentService from '../services/assignmentService1.js';
+  import assignmentService from '../services/assignmentService.js';
 
   let assignmentIndex = 0;
 
@@ -17,11 +17,32 @@
 
   let currentUserOnDbStore;
 
-  let currentAssignmentsStore
+  let currentAssignmentsStore;
 
   let currentSubmissionsStore;
 
   let currentUserGradesStore;
+
+  //* fetch all assignments
+  onMount(async () => {
+    try {
+      const response = await assignmentService.getAllAssignments();
+
+      if (response.status !== 200) {
+        throw new Error(
+          `${response.status} - ${response.statusText} - Error fetching all assignments!`
+        );
+      }
+      //* update assignments store
+      assignments.update((currentData) => {
+        currentData.push(response);
+        return currentData;
+      });
+      return response;
+    } catch (error) {
+      alert(error);
+    }
+  });
 
   const submitAnswer = async () =>
     await assignmentService.createAnswer(
@@ -114,6 +135,8 @@
     assignmentIndex %= $assignments.length;
   };
 
+  //* subscribe to all global store variables
+
   let unsubscribeUserOnDb = userOnDb.subscribe((currentValue) => {
     currentUserOnDbStore = currentValue;
   });
@@ -144,7 +167,8 @@
 <div class="md:w-2/5">
   <div class="my-5">
     <p>
-      There are {currentAssignmentsStore.length} Python problem sets needed to be answered.
+      There are {currentAssignmentsStore.length} Python problem sets needed to be
+      answered.
     </p>
   </div>
 
