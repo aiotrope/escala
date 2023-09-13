@@ -19,7 +19,7 @@
 
   let currentUserOnDb;
 
-  let currentSubmissions = [];
+  let currentSubmissions;
 
   let currentUserGrades;
 
@@ -57,21 +57,22 @@
     }
   });
 
-  const mountAllSubmissions = async () => {
-    const response = await fetch(
-      `/api/assignments/submissions/user/all/${$userUuid}`
-    );
+  const mountUserSubmissions = async () => {
+    setInterval(async () => {
+      const response = await fetch(
+        `/api/assignments/submissions/user/all/${$userUuid}`
+      );
+      const data = await response.json();
 
-    const data = await response.json();
+      console.log(data);
 
-    console.log(data);
+      submissions.set(data);
 
-    submissions.set(data);
-
-    return data;
+      return data;
+    }, 8000); // increase ms for testing
   };
 
-  const submitAnswer = async () => {
+  const gradeAnswer = async () => {
     const payload = {
       user_uuid: $userUuid,
       code: code,
@@ -162,9 +163,7 @@
   });
 
   let unsubscribeSubmission = submissions.subscribe((currentValue) => {
-    //* run the the function after successive submissions store update
     currentSubmissions = currentValue;
-    // gradeUserAnswer();
   });
 
   let unsubscribeUserGrades = userGrades.subscribe((currentValue) => {
@@ -177,7 +176,7 @@
 
   onDestroy(unsubscribeUserGrades);
 
-  mountAllSubmissions();
+  mountUserSubmissions();
 </script>
 
 <div class="md:w-2/5">
@@ -200,7 +199,7 @@
   </section>
 
   <section>
-    <Form bind:value={code} {submitAnswer} {updateIndex} />
+    <Form bind:value={code} {gradeAnswer} {updateIndex} />
   </section>
 
   <section>
@@ -225,4 +224,5 @@
       </p>
     {/if}
   </section>
+  
 </div>

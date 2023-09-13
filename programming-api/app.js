@@ -1,6 +1,6 @@
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 // import { serve } from './deps.js';
-import { sql } from './database/database.js';
+// import { sql } from './database/database.js';
 
 const handleFindAll = async () => {
   try {
