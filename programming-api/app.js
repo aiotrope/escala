@@ -97,32 +97,26 @@ const handleGetAllAnswers = async () => {
   }
 };
 
-const handleUpdateUserSubmission = async (request, urlPatternResult) => {
-  const programming_assignment_id =
-    urlPatternResult.pathname.groups.programming_assignment_id;
-
-  const user_uuid = urlPatternResult.pathname.groups.user_uuid;
+const handleUpdateSubmission = async (request, urlPatternResult) => {
+  const id = urlPatternResult.pathname.groups.id;
 
   try {
     const body = await request.text();
     const json = await JSON.parse(body);
 
-    await programmingAssignmentService.updateUserSubmission(
-      programming_assignment_id,
-      user_uuid,
+    await programmingAssignmentService.updateSubmission(
+      id,
       json.grader_feedback,
       json?.status,
       json?.correct,
       json?.score
     );
 
-    const submission =
-      await programmingAssignmentService.findUserLatestSubmission(
-        programming_assignment_id,
-        user_uuid
-      );
+    const submission = await programmingAssignmentService.findSubmissionById(
+      id
+    );
 
-    return Response.json(submission[0], { status: 200 });
+    return Response.json(submission, { status: 200 });
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }
@@ -169,25 +163,23 @@ const handleSubmissionsByUser = async (request, urlPatternResult) => {
   }
 };
 
-const handleRequest1 = async (request) => {
-  const programmingAssignments = await programmingAssignmentService.findAll();
+const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
+  const programming_assignment_id =
+    urlPatternResult.pathname.groups.programming_assignment_id;
 
-  const requestData = await request.json();
-  const testCode = programmingAssignments[0]['test_code'];
-  const data = {
-    testCode: testCode,
-    code: requestData.code,
-  };
+  const user_uuid = urlPatternResult.pathname.groups.user_uuid;
 
-  const response = await fetch('http://localhost:7800/api/grade', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const userLatestSubmission =
+      await programmingAssignmentService.findUserLatestSubmission(
+        programming_assignment_id,
+        user_uuid
+      );
 
-  return response;
+    return Response.json(userLatestSubmission[0], { status: 200 });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 404 });
+  }
 };
 
 const urlMapping = [
@@ -224,10 +216,9 @@ const urlMapping = [
   {
     method: 'PATCH',
     pattern: new URLPattern({
-      pathname:
-        '/assignments/submissions/:programming_assignment_id/:user_uuid',
+      pathname: '/assignments/submissions/:id',
     }),
-    fn: handleUpdateUserSubmission,
+    fn: handleUpdateSubmission,
   },
   {
     method: 'GET',
@@ -242,6 +233,14 @@ const urlMapping = [
       pathname: '/assignments/submissions/user/all/:user_uuid',
     }),
     fn: handleSubmissionsByUser,
+  },
+  {
+    method: 'GET',
+    pattern: new URLPattern({
+      pathname:
+        '/assignments/submissions/latest-submission/:programming_assignment_id/:user_uuid',
+    }),
+    fn: handleGetUserLatestSubmission,
   },
 ];
 

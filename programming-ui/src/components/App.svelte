@@ -24,134 +24,81 @@
   let currentUserGrades;
 
   onMount(async () => {
-    try {
-      const response = await fetch(`/api/user/${$userUuid}`);
+    const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
+      $userUuid
+    );
 
-      const jsonData = await response.json();
-
-      userOnDb.set(jsonData);
-
-      return jsonData;
-    } catch (error) {
-      alert(error);
-    }
+    userOnDb.set(userSavedOnDb);
   });
 
   onMount(async () => {
-    try {
-      const response = await fetch('/api/assignments');
+    const allAssignments = await assignmentService.fetchAllAssignments();
 
-      const jsonData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          `${response.status} - ${response.statusText} - Error fetching all assignments!`
-        );
-      }
-
-      assignments.set(jsonData);
-
-      return jsonData;
-    } catch (error) {
-      alert(error);
-    }
+    assignments.set(allAssignments);
   });
 
   onMount(async () => {
     let fetchInterval = setInterval(async () => {
-      const response = await fetch(
-        `/api/assignments/submissions/user/all/${$userUuid}`
+      const userSubmissions = await assignmentService.fetchAllUserSubmission(
+        $userUuid
       );
-      const data = await response.json();
 
-      console.log(data);
+      // console.log(userSubmissions);
 
-      submissions.set(data);
+      submissions.set(userSubmissions);
+    }, 2000); // increase ms for testing
 
-      return data;
-    }, 8000); // increase ms for testing
-
-    return () => clearInterval(fetchInterval)
+    return () => {
+      clearInterval(fetchInterval);
+    };
   });
 
   const gradeAnswer = async () => {
-    const payload = {
-      user_uuid: $userUuid,
-      code: code,
-    };
+    // user createe submission
+    const createSubmission = await assignmentService.createSubmission(
+      $userUuid,
+      code,
+      assignmentIndex
+    );
 
-    const options = {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      headers: {
-        Accept: 'application/json',
-        'Content-type': 'application/json',
-      },
-    };
+    // console.log(createSubmission)
 
-    let assignmentOrder = assignmentIndex + 1;
+    code = '';
 
-    try {
-      let url = `/api/assignments/${assignmentOrder}`;
+    const userExists = await assignmentService.checkUserExists($userUuid);
 
-      const response = await fetch(url, options);
+    if (userExists?.exists) {
+      userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
 
-      if (!response.ok) {
-        throw new Error(
-          `${response.status} - ${response.statusText} - Cannot submit answer!`
+      const userLatestSubmission = await assignmentService.findSubmissionById(
+        createSubmission?.id
+      );
+
+      const foundCodeAndAssignmentDuplicate = currentSubmissions.find(
+        (sub) =>
+          sub?.id !== userLatestSubmission?.id &&
+          sub.code === userLatestSubmission?.code &&
+          sub?.programming_assignment_id ===
+            userLatestSubmission?.programming_assignment_id
+      );
+
+      console.log(foundCodeAndAssignmentDuplicate);
+
+      if (!foundCodeAndAssignmentDuplicate) {
+        const gradeCurrentSubmission = await assignmentService.gradeSubmission(
+          createSubmission?.code,
+          createSubmission?.programming_assignment_id
         );
-      }
 
-      const jsonData = await response.json();
-
-      const userExists = await assignmentService.checkUserExists($userUuid);
-
-      if (userExists?.exists) {
-        $submissions = [...$submissions, jsonData];
-
-        userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
-
-        const gradingUrl = `/api/assignments/grading/${assignmentOrder}`;
-
-        const gradingResponse = await fetch(gradingUrl, options);
-
-        const gradingData = await gradingResponse.json();
-
-        if (gradingData?.result) {
-          const updateUrl = `/api/assignments/submissions/${assignmentOrder}/${$userUuid}`;
-
-          const updatePayload = {
-            grader_feedback: gradingData?.result,
-            status: gradingData?.result ? 'processed' : 'pending',
-            correct: gradingData?.result === 'passes test' ? true : false,
-            score: gradingData?.result === 'passes test' ? 100 : 0,
-          };
-
-          const updateOptions = {
-            method: 'PATCH',
-            body: JSON.stringify(updatePayload),
-            headers: {
-              Accept: 'application/json',
-              'Content-type': 'application/json',
-            },
-          };
-
-          const updateResponse = await fetch(updateUrl, updateOptions);
-
-          const updateData = await updateResponse.json();
-
-          // console.log(updateData);
-
-          code = '';
-
-          return updateData;
+        if (gradeCurrentSubmission?.result) {
+          await assignmentService.updateSubmission(
+            createSubmission?.id,
+            gradeCurrentSubmission
+          );
         }
-        return gradingData;
+      } else {
+        alert('Identical code on a given assignment. Submission not graded!');
       }
-
-      return jsonData;
-    } catch (error) {
-      alert(error);
     }
   };
 
@@ -177,7 +124,6 @@
   onDestroy(unsubscribeSubmission);
 
   onDestroy(unsubscribeUserGrades);
-
 </script>
 
 <div class="md:w-2/5">

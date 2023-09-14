@@ -53,9 +53,8 @@ const getAllSubmissionsByUser = async (user_uuid) => {
   return submissionsByUser;
 };
 
-const updateUserSubmission = async (
-  programming_assignment_id,
-  user_uuid,
+const updateSubmission = async (
+  id,
   grader_feedback,
   status,
   correct,
@@ -73,7 +72,7 @@ const updateUserSubmission = async (
     'status',
     'correct',
     'score'
-  )} WHERE programming_assignment_id=${programming_assignment_id} AND user_uuid=${user_uuid};`;
+  )} WHERE id=${id};`;
 };
 
 export {
@@ -82,7 +81,7 @@ export {
   answerAssignment,
   getAllAnswers,
   checkUserExists,
-  updateUserSubmission,
+  updateSubmission,
   findUserLatestSubmission,
   findSubmissionById,
   getAllSubmissionsByUser,
