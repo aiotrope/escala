@@ -58,7 +58,7 @@
   });
 
   onMount(async () => {
-    setInterval(async () => {
+    let fetchInterval = setInterval(async () => {
       const response = await fetch(
         `/api/assignments/submissions/user/all/${$userUuid}`
       );
@@ -70,6 +70,8 @@
 
       return data;
     }, 8000); // increase ms for testing
+
+    return () => clearInterval(fetchInterval)
   });
 
   const gradeAnswer = async () => {
