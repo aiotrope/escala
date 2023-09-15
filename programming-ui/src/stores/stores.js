@@ -17,6 +17,6 @@ const assignments = writable(assignmentList);
 
 let submissions = writable([]);
 
-let userGrades = writable([]);
+let gradeTally = writable(0);
 
-export { userUuid, assignments, submissions, userGrades, userOnDb };
+export { userUuid, assignments, submissions, userOnDb, gradeTally };

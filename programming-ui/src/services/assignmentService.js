@@ -82,6 +82,8 @@ const createSubmission = async (userUuid, code, assignmentIndex) => {
     // console.log(jsonData);
 
     return await response.json();
+
+    return jsonData;
   } catch (error) {
     alert(error);
   }
@@ -180,16 +182,65 @@ const fetchCurrentUserSavedOnDb = async (userUuid) => {
   }
 };
 
+const gradeSubmissionPromise = async (createSubmission) => {
+  return await new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      const submissionForGrading = await gradeSubmission(
+        createSubmission?.code,
+        createSubmission?.programming_assignment_id
+      );
+      resolve(submissionForGrading);
+    }, 8000);
+  });
+};
+
+const sumDriver = (arr, n) => {
+  // Creating an empty object
+  let frequency = {};
+
+  // Loop to create frequency object
+  for (let i = 0; i < n; i++) {
+    frequency[arr[i]] = (frequency[arr[i]] || 0) + 1;
+  }
+
+  // Converting keys of freq object to array
+  let list = Object.keys(frequency).map(Number);
+
+  // Return sum of array
+  return list.reduce((a, b) => a + b, 0);
+};
+
+const getTotalGrade = async (userUuid) => {
+  let sum = 0;
+  let userSubmissions = await fetchAllUserSubmission(userUuid);
+
+  let submissions1 = userSubmissions.filter(
+    (sub) => sub.programming_assignment_id === 1
+  );
+  let submissions2 = userSubmissions.filter(
+    (sub) => sub.programming_assignment_id === 2
+  );
+  let submissions3 = userSubmissions.filter(
+    (sub) => sub.programming_assignment_id === 3
+  );
+
+  let subMap1 = submissions1.map((sub) => sub.score);
+  let subMap2 = submissions2.map((sub) => sub.score);
+  let subMap3 = submissions3.map((sub) => sub.score);
+};
+
 const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
   findSubmissionById,
   createSubmission,
   fetchAllUserSubmission,
-  gradeSubmission,
   updateSubmission,
   fetchAllAssignments,
   fetchCurrentUserSavedOnDb,
+  gradeSubmission,
+  gradeSubmissionPromise,
+  // getTotalGrade,
 };
 
 export default assignmentService;

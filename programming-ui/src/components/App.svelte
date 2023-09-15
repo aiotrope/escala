@@ -5,8 +5,8 @@
     userUuid,
     assignments,
     submissions,
-    userGrades,
     userOnDb,
+    gradeTally,
   } from '../stores/stores.js';
 
   import assignmentService from '../services/assignmentService.js';
@@ -21,7 +21,11 @@
 
   let currentSubmissions;
 
-  let currentUserGrades;
+  let currentGradeTally;
+
+  let successSubmission = {};
+
+  let queueSubmissions = [];
 
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
@@ -70,6 +74,10 @@
     if (userExists?.exists) {
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
 
+      successSubmission = { ...createSubmission };
+
+      // console.log('SUCCESS SUBMISSION', successSubmission);
+
       const userLatestSubmission = await assignmentService.findSubmissionById(
         createSubmission?.id
       );
@@ -85,17 +93,45 @@
       console.log(foundCodeAndAssignmentDuplicate);
 
       if (!foundCodeAndAssignmentDuplicate) {
-        const gradeCurrentSubmission = await assignmentService.gradeSubmission(
+        queueSubmissions = [...queueSubmissions, createSubmission];
+
+        for (const prop of Object.getOwnPropertyNames(successSubmission)) {
+          delete successSubmission[prop];
+        }
+
+        // console.log('DELETE SUCCESS SUBMISSION', successSubmission);
+
+        /*    const gradeCurrentSubmission = await assignmentService.gradeSubmission(
           createSubmission?.code,
           createSubmission?.programming_assignment_id
+        ); */
+
+        let gradeSubmission = await assignmentService.gradeSubmissionPromise(
+          createSubmission
         );
 
-        if (gradeCurrentSubmission?.result) {
-          await assignmentService.updateSubmission(
-            createSubmission?.id,
-            gradeCurrentSubmission
+        console.log('GRADED SUB', gradeSubmission);
+
+        const queingForRequestingGradesAndSubmissionUpdate = async () => {
+          return await Promise.all(
+            queueSubmissions?.map(async (createSubmission) => {
+              let gradeSubmission =
+                await assignmentService.gradeSubmissionPromise(
+                  createSubmission
+                );
+
+              if (gradeSubmission?.result) {
+                await assignmentService.updateSubmission(
+                  createSubmission?.id,
+                  gradeSubmission
+                );
+              }
+            })
           );
-        }
+        };
+
+        let processedSubmission =
+          await queingForRequestingGradesAndSubmissionUpdate();
       } else {
         alert('Identical code on a given assignment. Submission not graded!');
       }
@@ -115,15 +151,17 @@
     currentSubmissions = currentValue;
   });
 
-  let unsubscribeUserGrades = userGrades.subscribe((currentValue) => {
-    currentUserGrades = currentValue;
+  let unsubscribeGradeTally = gradeTally.subscribe((currentValue) => {
+    currentGradeTally = currentValue;
   });
 
   onDestroy(unsubscribeUserOnDb);
 
   onDestroy(unsubscribeSubmission);
 
-  onDestroy(unsubscribeUserGrades);
+  onDestroy(unsubscribeGradeTally);
+
+  // console.log('SUCCESS SUBMISSION', successSubmission);
 </script>
 
 <div class="md:w-2/5">
@@ -153,9 +191,26 @@
     <h3>User submissions</h3>
     <p>Current User exists: {currentUserOnDb?.exists}</p>
 
-    {#if currentSubmissions?.length}
+    <!--  {#if currentSubmissions?.length}
       <ul>
         {#each currentSubmissions as data}
+          <li>
+            {#if data?.id}
+              {data?.id} - {data?.programming_assignment_id} - {data?.score} - {data?.correct
+                ? 'Correct'
+                : 'Incorrect'}
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p>
+        There are {$assignments.length} Python problem sets needed to be answered.
+      </p>
+    {/if} -->
+    {#if queueSubmissions?.length}
+      <ul>
+        {#each queueSubmissions as data}
           <li>
             {#if data?.id}
               {data?.id} - {data?.programming_assignment_id} - {data?.score} - {data?.correct
