@@ -52,41 +52,42 @@ const fetchAllUserSubmission = async (userUuid) => {
   }
 };
 
-const createSubmission = async (userUuid, code, assignmentIndex) => {
-  const payload = {
-    user_uuid: userUuid,
-    code: code,
-  };
+const createSubmissionPromise = async (userUuid, code, assignmentIndex) => {
+  return await new Promise(async (resolve, reject) => {
+    const payload = {
+      user_uuid: userUuid,
+      code: code,
+    };
 
-  const options = {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {
-      Accept: 'application/json',
-      'Content-type': 'application/json',
-    },
-  };
+    const options = {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        Accept: 'application/json',
+        'Content-type': 'application/json',
+      },
+    };
 
-  let assignmentOrder = assignmentIndex + 1;
-  try {
-    let url = `/api/assignments/${assignmentOrder}`;
+    let assignmentOrder = assignmentIndex + 1;
+    try {
+      let url = `/api/assignments/${assignmentOrder}`;
 
-    const response = await fetch(url, options);
+      const response = await fetch(url, options);
 
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Cannot submit answer!`
-      );
+      if (!response.ok) {
+        throw new Error(
+          `${response.status} - ${response.statusText} - Cannot submit answer!`
+        );
+      }
+
+      const jsonData = await response.json();
+
+      resolve(jsonData);
+    } catch (error) {
+      alert(error);
+      reject(error);
     }
-
-    // console.log(jsonData);
-
-    return await response.json();
-
-    return jsonData;
-  } catch (error) {
-    alert(error);
-  }
+  });
 };
 
 const gradeSubmission = async (code, assignmentId) => {
@@ -118,6 +119,18 @@ const gradeSubmission = async (code, assignmentId) => {
   } catch (error) {
     alert(error);
   }
+};
+
+const gradeSubmissionPromise = async (createSubmission) => {
+  return await new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      const submissionForGrading = await gradeSubmission(
+        createSubmission?.code,
+        createSubmission?.programming_assignment_id
+      );
+      resolve(submissionForGrading);
+    }, 10000);
+  });
 };
 
 const updateSubmission = async (submissionId, gradingData) => {
@@ -182,18 +195,6 @@ const fetchCurrentUserSavedOnDb = async (userUuid) => {
   }
 };
 
-const gradeSubmissionPromise = async (createSubmission) => {
-  return await new Promise((resolve, reject) => {
-    setTimeout(async () => {
-      const submissionForGrading = await gradeSubmission(
-        createSubmission?.code,
-        createSubmission?.programming_assignment_id
-      );
-      resolve(submissionForGrading);
-    }, 8000);
-  });
-};
-
 const sumDriver = (arr, n) => {
   // Creating an empty object
   let frequency = {};
@@ -233,7 +234,7 @@ const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
   findSubmissionById,
-  createSubmission,
+  createSubmissionPromise,
   fetchAllUserSubmission,
   updateSubmission,
   fetchAllAssignments,

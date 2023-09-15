@@ -58,8 +58,8 @@
   });
 
   const gradeAnswer = async () => {
-    // user createe submission
-    const createSubmission = await assignmentService.createSubmission(
+    // user create submission
+    const createSubmission = await assignmentService.createSubmissionPromise(
       $userUuid,
       code,
       assignmentIndex
@@ -106,32 +106,30 @@
           createSubmission?.programming_assignment_id
         ); */
 
-        let gradeSubmission = await assignmentService.gradeSubmissionPromise(
-          createSubmission
-        );
+        const parallelSubmissionGradingAndUpdate = async () => {
+          try {
+            const processQueues = await Promise.all(
+              queueSubmissions?.map(async (createSubmission) => {
+                let gradeSubmission =
+                  await assignmentService.gradeSubmissionPromise(
+                    createSubmission
+                  );
 
-        console.log('GRADED SUB', gradeSubmission);
-
-        const queingForRequestingGradesAndSubmissionUpdate = async () => {
-          return await Promise.all(
-            queueSubmissions?.map(async (createSubmission) => {
-              let gradeSubmission =
-                await assignmentService.gradeSubmissionPromise(
-                  createSubmission
-                );
-
-              if (gradeSubmission?.result) {
-                await assignmentService.updateSubmission(
-                  createSubmission?.id,
-                  gradeSubmission
-                );
-              }
-            })
-          );
+                if (gradeSubmission?.result) {
+                  await assignmentService.updateSubmission(
+                    createSubmission?.id,
+                    gradeSubmission
+                  );
+                }
+              })
+            );
+            return processQueues;
+          } catch (error) {
+            alert(error);
+          }
         };
 
-        let processedSubmission =
-          await queingForRequestingGradesAndSubmissionUpdate();
+        let processedSubmission = await parallelSubmissionGradingAndUpdate();
       } else {
         alert('Identical code on a given assignment. Submission not graded!');
       }
@@ -191,7 +189,7 @@
     <h3>User submissions</h3>
     <p>Current User exists: {currentUserOnDb?.exists}</p>
 
-    <!--  {#if currentSubmissions?.length}
+    {#if currentSubmissions?.length}
       <ul>
         {#each currentSubmissions as data}
           <li>
@@ -207,8 +205,8 @@
       <p>
         There are {$assignments.length} Python problem sets needed to be answered.
       </p>
-    {/if} -->
-    {#if queueSubmissions?.length}
+    {/if}
+    <!--  {#if queueSubmissions?.length}
       <ul>
         {#each queueSubmissions as data}
           <li>
@@ -224,6 +222,6 @@
       <p>
         There are {$assignments.length} Python problem sets needed to be answered.
       </p>
-    {/if}
+    {/if} -->
   </section>
 </div>
