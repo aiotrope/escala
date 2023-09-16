@@ -23,9 +23,9 @@
 
   let currentGradeTally;
 
-  let successSubmission = {};
+  let queue = [];
 
-  let queueSubmissions = [];
+  let completed;
 
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
@@ -50,7 +50,7 @@
       // console.log(userSubmissions);
 
       submissions.set(userSubmissions);
-    }, 2000); // increase ms for testing
+    }, 10000); // increase ms for testing
 
     return () => {
       clearInterval(fetchInterval);
@@ -74,8 +74,6 @@
     if (userExists?.exists) {
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
 
-      successSubmission = { ...createSubmission };
-
       // console.log('SUCCESS SUBMISSION', successSubmission);
 
       const userLatestSubmission = await assignmentService.findSubmissionById(
@@ -93,33 +91,29 @@
       console.log(foundCodeAndAssignmentDuplicate);
 
       if (!foundCodeAndAssignmentDuplicate) {
-        queueSubmissions = [...queueSubmissions, createSubmission];
-
-        for (const prop of Object.getOwnPropertyNames(successSubmission)) {
+        /* for (const prop of Object.getOwnPropertyNames(successSubmission)) {
           delete successSubmission[prop];
         }
-
+ */
         // console.log('DELETE SUCCESS SUBMISSION', successSubmission);
 
-        /*    const gradeCurrentSubmission = await assignmentService.gradeSubmission(
-          createSubmission?.code,
-          createSubmission?.programming_assignment_id
-        ); */
+        queue = [...queue, createSubmission];
 
-        const parallelSubmissionGradingAndUpdate = async () => {
+        const processSubmissionForGrading = async () => {
           try {
             const processQueues = await Promise.all(
-              queueSubmissions?.map(async (createSubmission) => {
+              queue?.map(async (submission) => {
                 let gradeSubmission =
-                  await assignmentService.gradeSubmissionPromise(
-                    createSubmission
-                  );
+                  await assignmentService.gradeSubmissionPromise(submission);
 
                 if (gradeSubmission?.result) {
                   await assignmentService.updateSubmission(
                     createSubmission?.id,
                     gradeSubmission
                   );
+
+                  queue.splice(queue.indexOf(submission), 1);
+                  queue = queue;
                 }
               })
             );
@@ -129,7 +123,7 @@
           }
         };
 
-        let processedSubmission = await parallelSubmissionGradingAndUpdate();
+        let processedSubmission = await processSubmissionForGrading();
       } else {
         alert('Identical code on a given assignment. Submission not graded!');
       }
@@ -159,7 +153,7 @@
 
   onDestroy(unsubscribeGradeTally);
 
-  // console.log('SUCCESS SUBMISSION', successSubmission);
+  $: console.log(queue.length)
 </script>
 
 <div class="md:w-2/5">

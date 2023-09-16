@@ -85,7 +85,6 @@ const createSubmissionPromise = async (userUuid, code, assignmentIndex) => {
       resolve(jsonData);
     } catch (error) {
       alert(error);
-      reject(error);
     }
   });
 };
@@ -129,7 +128,7 @@ const gradeSubmissionPromise = async (createSubmission) => {
         createSubmission?.programming_assignment_id
       );
       resolve(submissionForGrading);
-    }, 10000);
+    }, 5000);
   });
 };
 
@@ -230,6 +229,8 @@ const getTotalGrade = async (userUuid) => {
   let subMap3 = submissions3.map((sub) => sub.score);
 };
 
+
+
 const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
@@ -241,7 +242,6 @@ const assignmentService = {
   fetchCurrentUserSavedOnDb,
   gradeSubmission,
   gradeSubmissionPromise,
-  // getTotalGrade,
 };
 
 export default assignmentService;
