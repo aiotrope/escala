@@ -11,8 +11,8 @@ POST http://localhost:7800/api/assignments/1 HTTP/1.1
 Content-Type: application/json
 
 {
-    "code": "def hello(): return 'Hello'",
-    "user_uuid": "arnel27"
+    "code": "def hello(): return 'He'",
+    "user_uuid": "arnel19"
 }
 
 
@@ -46,7 +46,7 @@ GET http://localhost:7800/api/assignments/submissions/5
 
 
 ### get all submissions made by user
-GET http://localhost:7800/api/assignments/submissions/user/all/bba31d97-dde1-4ef5-ab9b-aa58c6dccf75
+GET http://localhost:7800/api/assignments/submissions/user/all/arnel31
 
 
 ### test grading

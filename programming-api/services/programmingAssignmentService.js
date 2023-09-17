@@ -13,8 +13,11 @@ const findOne = async (id) => {
 };
 
 const answerAssignment = async (programming_assignment_id, code, user_uuid) => {
-  await sql`INSERT INTO programming_assignment_submissions (programming_assignment_id, code, user_uuid) 
+  const submission =
+    await sql`INSERT INTO programming_assignment_submissions (programming_assignment_id, code, user_uuid) 
   VALUES (${programming_assignment_id}, ${code}, ${user_uuid});`;
+
+  return submission;
 };
 
 const findUserLatestSubmission = async (
@@ -25,7 +28,7 @@ const findUserLatestSubmission = async (
     WHERE programming_assignment_id=${programming_assignment_id} AND user_uuid=${user_uuid} 
     ORDER BY last_updated DESC limit 1;`;
 
-  return submission;
+  return submission[0];
 };
 
 const findSubmissionById = async (submissionId) => {

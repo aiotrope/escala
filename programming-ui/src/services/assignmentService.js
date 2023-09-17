@@ -42,17 +42,17 @@ const fetchAllUserSubmission = async (userUuid) => {
     }
     const jsonData = await response.json();
 
-    const userGradedSubmissions = jsonData.filter(
+   /*  const userGradedSubmissions = jsonData.filter(
       (json) => json?.status === 'processed' && json?.grader_feedback !== null
-    );
+    ); */
 
-    return userGradedSubmissions;
+    return jsonData;
   } catch (error) {
     alert(error);
   }
 };
 
-const createSubmissionPromise = async (userUuid, code, assignmentIndex) => {
+const createSubmission = async (userUuid, code, assignmentIndex) => {
   return await new Promise(async (resolve, reject) => {
     const payload = {
       user_uuid: userUuid,
@@ -128,7 +128,7 @@ const gradeSubmissionPromise = async (createSubmission) => {
         createSubmission?.programming_assignment_id
       );
       resolve(submissionForGrading);
-    }, 5000);
+    }, 2000);
   });
 };
 
@@ -235,7 +235,7 @@ const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
   findSubmissionById,
-  createSubmissionPromise,
+  createSubmission,
   fetchAllUserSubmission,
   updateSubmission,
   fetchAllAssignments,

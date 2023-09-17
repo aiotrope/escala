@@ -25,8 +25,6 @@
 
   let queue = [];
 
-  let completed;
-
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
       $userUuid
@@ -47,10 +45,8 @@
         $userUuid
       );
 
-      // console.log(userSubmissions);
-
       submissions.set(userSubmissions);
-    }, 10000); // increase ms for testing
+    }, 1000);
 
     return () => {
       clearInterval(fetchInterval);
@@ -58,14 +54,11 @@
   });
 
   const gradeAnswer = async () => {
-    // user create submission
-    const createSubmission = await assignmentService.createSubmissionPromise(
+    const createSubmission = await assignmentService.createSubmission(
       $userUuid,
       code,
       assignmentIndex
     );
-
-    // console.log(createSubmission)
 
     code = '';
 
@@ -73,8 +66,6 @@
 
     if (userExists?.exists) {
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
-
-      // console.log('SUCCESS SUBMISSION', successSubmission);
 
       const userLatestSubmission = await assignmentService.findSubmissionById(
         createSubmission?.id
@@ -91,12 +82,6 @@
       console.log(foundCodeAndAssignmentDuplicate);
 
       if (!foundCodeAndAssignmentDuplicate) {
-        /* for (const prop of Object.getOwnPropertyNames(successSubmission)) {
-          delete successSubmission[prop];
-        }
- */
-        // console.log('DELETE SUCCESS SUBMISSION', successSubmission);
-
         queue = [...queue, createSubmission];
 
         const processSubmissionForGrading = async () => {
@@ -152,8 +137,6 @@
   onDestroy(unsubscribeSubmission);
 
   onDestroy(unsubscribeGradeTally);
-
-  $: console.log(queue.length)
 </script>
 
 <div class="md:w-2/5">
@@ -200,22 +183,5 @@
         There are {$assignments.length} Python problem sets needed to be answered.
       </p>
     {/if}
-    <!--  {#if queueSubmissions?.length}
-      <ul>
-        {#each queueSubmissions as data}
-          <li>
-            {#if data?.id}
-              {data?.id} - {data?.programming_assignment_id} - {data?.score} - {data?.correct
-                ? 'Correct'
-                : 'Incorrect'}
-            {/if}
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <p>
-        There are {$assignments.length} Python problem sets needed to be answered.
-      </p>
-    {/if} -->
   </section>
 </div>

@@ -1,6 +1,9 @@
+import { PQueue } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
+import { sql } from './database/database.js';
 // import { serve } from './deps.js';
-// import { sql } from './database/database.js';
+
+const queue = new PQueue({ concurrency: 99 });
 
 const handleFindAll = async () => {
   try {
@@ -37,17 +40,22 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     ) {
       await programmingAssignmentService.answerAssignment(
         programming_assignment_id,
-        json.code,
-        json.user_uuid
+        json?.code,
+        json?.user_uuid
       );
 
-      const submission =
+      const findUserLatestSubmission =
         await programmingAssignmentService.findUserLatestSubmission(
           programming_assignment_id,
-          json.user_uuid
+          json?.user_uuid
         );
 
-      return Response.json(submission[0], { status: 200 });
+      const userLatestSubmission =
+        await programmingAssignmentService.findSubmissionById(
+          findUserLatestSubmission?.id
+        );
+
+      return Response.json(userLatestSubmission, { status: 200 });
     } else {
       return new Response('Code field is required!', { status: 400 });
     }
@@ -81,7 +89,9 @@ const handleGrading = async (request, urlPatternResult) => {
 
     console.log(JSON.stringify(response));
 
-    return response;
+    const result = await queue.add(async () => response);
+
+    return result;
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }
@@ -176,7 +186,7 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
         user_uuid
       );
 
-    return Response.json(userLatestSubmission[0], { status: 200 });
+    return Response.json(userLatestSubmission, { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 404 });
   }
