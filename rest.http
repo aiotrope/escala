@@ -7,12 +7,12 @@ GET http://localhost:7800/api/assignments/2 HTTP/1.1
 
 
 ### answer assignment
-POST http://localhost:7800/api/assignments/3 HTTP/1.1
+POST http://localhost:7800/api/assignments/1 HTTP/1.1
 Content-Type: application/json
 
 {
-    "code": "def sum(a, b): return a + b",
-    "user_uuid": "arnel16"
+    "code": "def hello (): return 'Hello'",
+    "user_uuid": "arnel1"
 }
 
 
@@ -46,7 +46,7 @@ GET http://localhost:7800/api/assignments/submissions/11
 
 
 ### get all submissions made by user
-GET http://localhost:7800/api/assignments/submissions/user/all/arnel10
+GET http://localhost:7800/api/assignments/submissions/user/all/arnel1
 
 
 ### test grading

@@ -11,6 +11,8 @@
 
   import assignmentService from '../services/assignmentService.js';
 
+  import TopBar from './TopBar.svelte';
+
   import Form from './Form.svelte';
 
   let assignmentIndex = 0;
@@ -24,6 +26,8 @@
   let currentGradeTally;
 
   let queue = [];
+
+  let isInCorrect = true;
 
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
@@ -53,14 +57,12 @@
     };
   });
 
-  const gradeAnswer = async () => {
+  const submitAnswer = async () => {
     const createSubmission = await assignmentService.createSubmission(
       $userUuid,
       code,
       assignmentIndex
     );
-
-    code = '';
 
     const userExists = await assignmentService.checkUserExists($userUuid);
 
@@ -71,6 +73,8 @@
         createSubmission?.id
       );
 
+      isInCorrect = createSubmission?.result === 'passes test' ? false : true;
+
       const foundCodeAndAssignmentDuplicate = currentSubmissions.find(
         (sub) =>
           sub?.id !== userLatestSubmission?.id &&
@@ -79,44 +83,16 @@
             userLatestSubmission?.programming_assignment_id
       );
 
-      console.log(foundCodeAndAssignmentDuplicate);
-
-      if (!foundCodeAndAssignmentDuplicate) {
-        queue = [...queue, createSubmission];
-
-        const processSubmissionForGrading = async () => {
-          try {
-            const processQueues = await Promise.all(
-              queue?.map(async (submission) => {
-                let gradeSubmission =
-                  await assignmentService.gradeSubmissionPromise(submission);
-
-                if (gradeSubmission?.result) {
-                  await assignmentService.updateSubmission(
-                    createSubmission?.id,
-                    gradeSubmission
-                  );
-
-                  queue.splice(queue.indexOf(submission), 1);
-                  queue = queue;
-                }
-              })
-            );
-            return processQueues;
-          } catch (error) {
-            alert(error);
-          }
-        };
-
-        let processedSubmission = await processSubmissionForGrading();
-      } else {
+      if (foundCodeAndAssignmentDuplicate) {
         alert('Identical code on a given assignment. Submission not graded!');
       }
     }
+    code = isInCorrect ? code : '';
   };
 
   const updateIndex = () => {
     assignmentIndex++;
+    isInCorrect = true;
     assignmentIndex %= $assignments.length;
   };
 
@@ -159,7 +135,13 @@
   </section>
 
   <section>
-    <Form bind:value={code} {gradeAnswer} {updateIndex} />
+    <Form
+      bind:value={code}
+      {submitAnswer}
+      {updateIndex}
+      {isInCorrect}
+      {assignmentIndex}
+    />
   </section>
 
   <section>
@@ -171,9 +153,8 @@
         {#each currentSubmissions as data}
           <li>
             {#if data?.id}
-              {data?.id} - {data?.programming_assignment_id} - {data?.score} - {data?.correct
-                ? 'Correct'
-                : 'Incorrect'}
+              {data?.id} - {data?.programming_assignment_id} - {data?.grader_feedback}
+              - {data?.correct ? 'Correct' : 'Incorrect'}
             {/if}
           </li>
         {/each}

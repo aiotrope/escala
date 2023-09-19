@@ -1,7 +1,9 @@
 <script>
   export let value;
-  export let gradeAnswer;
+  export let submitAnswer;
   export let updateIndex;
+  export let isInCorrect;
+  export let assignmentIndex;
 </script>
 
 <form>
@@ -20,17 +22,24 @@
 
   <button
     type="button"
-    class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800"
-    on:click={gradeAnswer}
+    class="inline-flex items-center px-5 py-2.5 my-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800"
+    on:click={submitAnswer}
   >
     Submit your answer
   </button>
 
   <button
     type="button"
-    class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-slate-500 rounded-lg focus:ring-4 focus:ring-slate-200 dark:focus:ring-slate-900 hover:bg-slate-600"
+    class={`inline-flex items-center px-5 py-2.5 text-sm font-medium text-center rounded-lg text-gray-800 focus:ring-4 ${
+      isInCorrect
+        ? 'bg-white'
+        : 'bg-white border border-gray-300 rounded shadow hover:bg-gray-100'
+    }`}
     on:click={updateIndex}
+    disabled={isInCorrect}
   >
-    Next Problem
+    {isInCorrect
+      ? `Working on problem #: ${assignmentIndex + 1}`
+      : 'Answer next assignment'}
   </button>
 </form>

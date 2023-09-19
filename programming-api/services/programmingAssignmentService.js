@@ -56,25 +56,17 @@ const getAllSubmissionsByUser = async (user_uuid) => {
   return submissionsByUser;
 };
 
-const updateSubmission = async (
-  id,
-  grader_feedback,
-  status,
-  correct,
-  score
-) => {
+const updateSubmission = async (id, grader_feedback, status, correct) => {
   const submissions = {
     grader_feedback: grader_feedback,
     status: status,
     correct: correct,
-    score: score,
   };
   await sql`UPDATE programming_assignment_submissions SET ${sql(
     submissions,
     'grader_feedback',
     'status',
-    'correct',
-    'score'
+    'correct'
   )} WHERE id=${id};`;
 };
 
@@ -95,7 +87,7 @@ const gradeSubmission = async (submission) => {
       body: JSON.stringify(data),
     });
 
-    return response
+    return response;
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }

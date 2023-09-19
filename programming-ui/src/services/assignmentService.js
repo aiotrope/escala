@@ -42,11 +42,11 @@ const fetchAllUserSubmission = async (userUuid) => {
     }
     const jsonData = await response.json();
 
-   /*  const userGradedSubmissions = jsonData.filter(
+   const userGradedSubmissions = jsonData.filter(
       (json) => json?.status === 'processed' && json?.grader_feedback !== null
-    ); */
+    );
 
-    return jsonData;
+    return userGradedSubmissions;
   } catch (error) {
     alert(error);
   }

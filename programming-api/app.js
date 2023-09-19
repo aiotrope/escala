@@ -84,19 +84,16 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
             grader_feedback: json?.result,
             status: 'processed',
             correct: json?.result === 'passes test' ? true : false,
-            score: json?.result === 'passes test' ? 100 : 0,
           };
 
-          let updated =
-            await sql`UPDATE programming_assignment_submissions SET ${sql(
-              updateSubmissionData,
-              'grader_feedback',
-              'status',
-              'correct',
-              'score'
-            )} WHERE id=${updateSubmissionData.id} returning *`;
+          await sql`UPDATE programming_assignment_submissions SET ${sql(
+            updateSubmissionData,
+            'grader_feedback',
+            'status',
+            'correct'
+          )} WHERE id=${updateSubmissionData.id} returning *`;
 
-          const data = {
+          const dataAfterSubmission = {
             id: userLatestSubmission?.id,
             user_uuid: userLatestSubmission?.user_uuid,
             programming_assignment_id:
@@ -104,18 +101,21 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
             result: json?.result,
           };
 
-          return data;
+          return dataAfterSubmission;
         });
 
         nonidenticalSubmissions.push(init);
 
         const promises = await Promise.all(
-          nonidenticalSubmissions.map(async (submissions) => {
-            return await submissions;
+          nonidenticalSubmissions.map(async (submission) => {
+            return await submission;
           })
         );
 
-        const result  = promises.find(pr => pr.id  === userLatestSubmission.id)
+        const result = promises.find(
+          (promise) => promise.id === userLatestSubmission.id
+        );
+
         return Response.json(result, {
           status: 200,
         });
@@ -145,7 +145,7 @@ const handleGrading = async (request, urlPatternResult) => {
       code: json?.code,
     };
 
-    const response = await fetch('http://grader-api:7001', {
+    const response = await fetch('http://grader-api:7000', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -154,8 +154,6 @@ const handleGrading = async (request, urlPatternResult) => {
     });
 
     console.log(JSON.stringify(response));
-
-    // const result = await queue.add(async () => response);
 
     return response;
   } catch (err) {
@@ -184,8 +182,7 @@ const handleUpdateSubmission = async (request, urlPatternResult) => {
       id,
       json.grader_feedback,
       json?.status,
-      json?.correct,
-      json?.score
+      json?.correct
     );
 
     const submission = await programmingAssignmentService.findSubmissionById(
@@ -350,15 +347,3 @@ const portConfig = { port: 7777, hostname: '0.0.0.0' };
 for await (const conn of Deno.listen(portConfig)) {
   handleHttpConnection(conn);
 }
-
-/* 
-       const message = await programmingAssignmentService.gradeSubmission(
-        userLatestSubmission
-      );
-      
-      const text = await message?.json();
-
-      const jsonData = {
-        result: text?.result,
-        ...userLatestSubmission,
-      }; */

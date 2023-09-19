@@ -16,7 +16,6 @@ CREATE TABLE programming_assignment_submissions (
   status SUBMISSION_STATUS NOT NULL DEFAULT 'pending',
   grader_feedback TEXT,
   correct BOOLEAN DEFAULT FALSE,
-  score INTEGER DEFAULT 0,
   last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
