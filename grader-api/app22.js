@@ -78,12 +78,7 @@ const handleRequest = async (request) => {
   // in practice, you would either send the code to grade to the grader-api
   // or use e.g. a message queue that the grader api would read and process
 
-  if (JSON.stringify(result).includes('OK')) {
-    return Response.json({ result: 'passes test' });
-  } else {
-    return Response.json({ result: 'failed test' });
-  } 
-  // return new Response(JSON.stringify({ result: result }));
+  return new Response(JSON.stringify({ result: result }));
 };
 
 const portConfig = { port: 7000, hostname: '0.0.0.0' };

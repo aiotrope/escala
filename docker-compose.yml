@@ -50,7 +50,7 @@ services:
       - ./app-cache/:/app-cache
       - "/var/run/docker.sock:/var/run/docker.sock"
     expose:
-      - 7001
+      - 7000
     depends_on:
       - database
       - flyway

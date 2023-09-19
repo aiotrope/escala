@@ -1,9 +1,13 @@
-import { PQueue } from './deps.js';
+import { PQueue, Queue, pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 import { sql } from './database/database.js';
 // import { serve } from './deps.js';
 
-const queue = new PQueue({ concurrency: 99 });
+const queue = new Queue();
+
+const limit = pLimit(99);
+
+const nonidenticalSubmissions = [];
 
 const handleFindAll = async () => {
   try {
@@ -55,6 +59,68 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           findUserLatestSubmission?.id
         );
 
+      const userSubmissions =
+        await programmingAssignmentService.getAllSubmissionsByUser(
+          userLatestSubmission?.user_uuid
+        );
+
+      const foundCodeAndAssignmentDuplicate = userSubmissions.find(
+        (sub) =>
+          sub?.id !== userLatestSubmission?.id &&
+          sub.code === userLatestSubmission?.code &&
+          sub?.programming_assignment_id ===
+            userLatestSubmission?.programming_assignment_id
+      );
+
+      if (!foundCodeAndAssignmentDuplicate) {
+        let init = limit(async () => {
+          const submission = await programmingAssignmentService.gradeSubmission(
+            userLatestSubmission
+          );
+          const json = await submission.json();
+
+          const updateSubmissionData = {
+            id: userLatestSubmission?.id,
+            grader_feedback: json?.result,
+            status: 'processed',
+            correct: json?.result === 'passes test' ? true : false,
+            score: json?.result === 'passes test' ? 100 : 0,
+          };
+
+          let updated =
+            await sql`UPDATE programming_assignment_submissions SET ${sql(
+              updateSubmissionData,
+              'grader_feedback',
+              'status',
+              'correct',
+              'score'
+            )} WHERE id=${updateSubmissionData.id} returning *`;
+
+          const data = {
+            id: userLatestSubmission?.id,
+            user_uuid: userLatestSubmission?.user_uuid,
+            programming_assignment_id:
+              userLatestSubmission?.programming_assignment_id,
+            result: json?.result,
+          };
+
+          return data;
+        });
+
+        nonidenticalSubmissions.push(init);
+
+        const promises = await Promise.all(
+          nonidenticalSubmissions.map(async (submissions) => {
+            return await submissions;
+          })
+        );
+
+        const result  = promises.find(pr => pr.id  === userLatestSubmission.id)
+        return Response.json(result, {
+          status: 200,
+        });
+      }
+
       return Response.json(userLatestSubmission, { status: 200 });
     } else {
       return new Response('Code field is required!', { status: 400 });
@@ -89,9 +155,9 @@ const handleGrading = async (request, urlPatternResult) => {
 
     console.log(JSON.stringify(response));
 
-    const result = await queue.add(async () => response);
+    // const result = await queue.add(async () => response);
 
-    return result;
+    return response;
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }
@@ -284,3 +350,15 @@ const portConfig = { port: 7777, hostname: '0.0.0.0' };
 for await (const conn of Deno.listen(portConfig)) {
   handleHttpConnection(conn);
 }
+
+/* 
+       const message = await programmingAssignmentService.gradeSubmission(
+        userLatestSubmission
+      );
+      
+      const text = await message?.json();
+
+      const jsonData = {
+        result: text?.result,
+        ...userLatestSubmission,
+      }; */

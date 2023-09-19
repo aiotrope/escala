@@ -78,6 +78,29 @@ const updateSubmission = async (
   )} WHERE id=${id};`;
 };
 
+const gradeSubmission = async (submission) => {
+  try {
+    const assignment = await findOne(submission?.programming_assignment_id);
+
+    const data = {
+      testCode: assignment?.test_code,
+      code: submission?.code,
+    };
+
+    const response = await fetch('http://grader-api:7000', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    return response
+  } catch (err) {
+    return new Response(err.message, { status: 400 });
+  }
+};
+
 export {
   findAll,
   findOne,
@@ -88,4 +111,5 @@ export {
   findUserLatestSubmission,
   findSubmissionById,
   getAllSubmissionsByUser,
+  gradeSubmission,
 };
