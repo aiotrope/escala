@@ -1,7 +1,7 @@
 import { PQueue, Queue, pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 import { sql } from './database/database.js';
-// import { serve } from './deps.js';
+import { serve } from './deps.js';
 
 const queue = new Queue();
 
@@ -79,7 +79,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           );
           const json = await submission.json();
 
-          const updateSubmissionData = {
+          /* const updateSubmissionData = {
             id: userLatestSubmission?.id,
             grader_feedback: json?.result,
             status: 'processed',
@@ -91,7 +91,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
             'grader_feedback',
             'status',
             'correct'
-          )} WHERE id=${updateSubmissionData.id} returning *`;
+          )} WHERE id=${updateSubmissionData.id} returning *`; */
 
           const dataAfterSubmission = {
             id: userLatestSubmission?.id,
@@ -255,6 +255,16 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
   }
 };
 
+const handleDeleteUserSubmissions = async (request, urlPatternResult) => {
+  const user_uuid = urlPatternResult.pathname.groups.user_uuid;
+  try {
+    await programmingAssignmentService.deleteUser(user_uuid);
+    return new Response('Delete user & submissions', { status: 200 });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 400 });
+  }
+};
+
 const urlMapping = [
   {
     method: 'GET',
@@ -314,6 +324,13 @@ const urlMapping = [
         '/assignments/submissions/latest-submission/:programming_assignment_id/:user_uuid',
     }),
     fn: handleGetUserLatestSubmission,
+  },
+  {
+    method: 'DELETE',
+    pattern: new URLPattern({
+      pathname: '/assignments/submissions/user/:user_uuid',
+    }),
+    fn: handleDeleteUserSubmissions,
   },
 ];
 

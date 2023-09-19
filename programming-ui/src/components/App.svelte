@@ -11,8 +11,6 @@
 
   import assignmentService from '../services/assignmentService.js';
 
-  import TopBar from './TopBar.svelte';
-
   import Form from './Form.svelte';
 
   let assignmentIndex = 0;
@@ -25,9 +23,9 @@
 
   let currentGradeTally;
 
-  let queue = [];
-
   let isInCorrect = true;
+
+  let currentUserUuid;
 
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
@@ -64,6 +62,8 @@
       assignmentIndex
     );
 
+    console.log('CREATED SUBS', createSubmission);
+
     const userExists = await assignmentService.checkUserExists($userUuid);
 
     if (userExists?.exists) {
@@ -83,11 +83,39 @@
             userLatestSubmission?.programming_assignment_id
       );
 
-      if (foundCodeAndAssignmentDuplicate) {
+      if (!foundCodeAndAssignmentDuplicate) {
+        let points = await assignmentService.getTotalPoints(
+          userLatestSubmission
+        );
+        console.log(points);
+        gradeTally.update((currentData) => currentData + points);
+
+        await assignmentService.updateSubmission(createSubmission);
+      } else {
         alert('Identical code on a given assignment. Submission not graded!');
       }
     }
-    code = isInCorrect ? code : '';
+    code = createSubmission.result === 'passes test' ? '' : code;
+  };
+
+  const deleteUser = async () => {
+    localStorage.clear()
+
+    userOnDb.update((currentData) => currentData);
+
+    userUuid.update((currentData) => currentData);
+
+    submissions.update((currentData) => currentData);
+
+    gradeTally.update((currentData) => currentData);
+
+    assignmentIndex = 0;
+
+    code = ''
+
+    isInCorrect = true;
+
+    return await assignmentService.deleteUser($userUuid);
   };
 
   const updateIndex = () => {
@@ -108,11 +136,17 @@
     currentGradeTally = currentValue;
   });
 
+  let unsubscribeUserUuid = userUuid.subscribe((currentValue) => {
+    currentUserUuid = currentValue;
+  });
+
   onDestroy(unsubscribeUserOnDb);
 
   onDestroy(unsubscribeSubmission);
 
   onDestroy(unsubscribeGradeTally);
+
+  onDestroy(unsubscribeUserUuid);
 </script>
 
 <div class="md:w-2/5">
@@ -141,6 +175,7 @@
       {updateIndex}
       {isInCorrect}
       {assignmentIndex}
+      {deleteUser}
     />
   </section>
 

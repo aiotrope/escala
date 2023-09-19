@@ -57,17 +57,23 @@ const getAllSubmissionsByUser = async (user_uuid) => {
 };
 
 const updateSubmission = async (id, grader_feedback, status, correct) => {
-  const submissions = {
-    grader_feedback: grader_feedback,
-    status: status,
-    correct: correct,
-  };
-  await sql`UPDATE programming_assignment_submissions SET ${sql(
-    submissions,
-    'grader_feedback',
-    'status',
-    'correct'
-  )} WHERE id=${id};`;
+  return await new Promise(async (resolve, reject) => {
+    const updateData = {
+      id: id,
+      grader_feedback: grader_feedback,
+      status: status,
+      correct: correct,
+    };
+    const submissionToUpdate =
+      await sql`UPDATE programming_assignment_submissions SET ${sql(
+        updateData,
+        'grader_feedback',
+        'status',
+        'correct'
+      )} WHERE id=${updateData.id} returning *;`;
+
+    resolve(submissionToUpdate);
+  });
 };
 
 const gradeSubmission = async (submission) => {
@@ -93,6 +99,10 @@ const gradeSubmission = async (submission) => {
   }
 };
 
+const deleteUser = async (user_uuid) => {
+  await sql`DELETE FROM programming_assignment_submissions WHERE user_uuid=${user_uuid};`;
+};
+
 export {
   findAll,
   findOne,
@@ -104,4 +114,5 @@ export {
   findSubmissionById,
   getAllSubmissionsByUser,
   gradeSubmission,
+  deleteUser,
 };

@@ -42,7 +42,7 @@ const fetchAllUserSubmission = async (userUuid) => {
     }
     const jsonData = await response.json();
 
-   const userGradedSubmissions = jsonData.filter(
+    const userGradedSubmissions = jsonData.filter(
       (json) => json?.status === 'processed' && json?.grader_feedback !== null
     );
 
@@ -132,12 +132,11 @@ const gradeSubmissionPromise = async (createSubmission) => {
   });
 };
 
-const updateSubmission = async (submissionId, gradingData) => {
+const updateSubmission = async (createdSubmission) => {
   const payload = {
-    grader_feedback: gradingData?.result,
-    status: gradingData?.result ? 'processed' : 'pending',
-    correct: gradingData?.result === 'passes test' ? true : false,
-    score: gradingData?.result === 'passes test' ? 100 : 0,
+    grader_feedback: createdSubmission?.result,
+    status: 'processed',
+    correct: createdSubmission?.result === 'passes test' ? true : false,
   };
 
   const options = {
@@ -149,10 +148,8 @@ const updateSubmission = async (submissionId, gradingData) => {
     },
   };
 
-  // let assignmentOrder = assignmentIndex + 1;
-
   try {
-    const url = `/api/assignments/submissions/${submissionId}`;
+    const url = `/api/assignments/submissions/${createdSubmission?.id}`;
 
     const response = await fetch(url, options);
 
@@ -194,42 +191,57 @@ const fetchCurrentUserSavedOnDb = async (userUuid) => {
   }
 };
 
-const sumDriver = (arr, n) => {
-  // Creating an empty object
-  let frequency = {};
+const getTotalPoints = async (submission) => {
+  let sub1 = 0;
+  let sub2 = 0;
+  let sub3 = 0;
 
-  // Loop to create frequency object
-  for (let i = 0; i < n; i++) {
-    frequency[arr[i]] = (frequency[arr[i]] || 0) + 1;
+  const submissions = await fetchAllUserSubmission(submission?.user_uuid);
+
+  const newSubmission = submissions[0];
+
+  console.log(newSubmission);
+
+  if (newSubmission?.correct && submission?.programming_assignment_id === 1) {
+    sub1 = 100;
   }
 
-  // Converting keys of freq object to array
-  let list = Object.keys(frequency).map(Number);
+  if (newSubmission?.correct && submission?.programming_assignment_id === 2) {
+    sub2 = 100;
+  }
 
-  // Return sum of array
-  return list.reduce((a, b) => a + b, 0);
+  if (newSubmission?.correct && submission?.programming_assignment_id === 3) {
+    sub3 = 100;
+  }
+
+  let points = sub1 + sub2 + sub3;
+  return points;
 };
 
-const getTotalGrade = async (userUuid) => {
-  let sum = 0;
-  let userSubmissions = await fetchAllUserSubmission(userUuid);
+const deleteUser = async (userId) => {
+  const options = {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      'Content-type': 'application/json',
+    },
+  };
+  try {
+    const url = `/api/assignments/submissions/user/${userId}`;
 
-  let submissions1 = userSubmissions.filter(
-    (sub) => sub.programming_assignment_id === 1
-  );
-  let submissions2 = userSubmissions.filter(
-    (sub) => sub.programming_assignment_id === 2
-  );
-  let submissions3 = userSubmissions.filter(
-    (sub) => sub.programming_assignment_id === 3
-  );
+    const response = await fetch(url, options);
 
-  let subMap1 = submissions1.map((sub) => sub.score);
-  let subMap2 = submissions2.map((sub) => sub.score);
-  let subMap3 = submissions3.map((sub) => sub.score);
+    if (!response.ok) {
+      throw new Error(
+        `${response.status} - ${response.statusText} - Error deleting user!`
+      );
+    }
+
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
 };
-
-
 
 const assignmentService = {
   checkUserExists,
@@ -242,6 +254,8 @@ const assignmentService = {
   fetchCurrentUserSavedOnDb,
   gradeSubmission,
   gradeSubmissionPromise,
+  getTotalPoints,
+  deleteUser,
 };
 
 export default assignmentService;

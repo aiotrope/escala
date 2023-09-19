@@ -7,7 +7,7 @@ if (!user) {
   localStorage.setItem('userUuid', user);
 }
 
-const userUuid = readable(user);
+const userUuid = writable(user);
 
 let assignmentList = [];
 

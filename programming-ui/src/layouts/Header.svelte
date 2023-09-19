@@ -1,5 +1,5 @@
 <script>
-  import { userUuid } from '../stores/stores.js';
+  import { userUuid, gradeTally } from '../stores/stores.js';
 </script>
 
 <nav class="flex items-center justify-between flex-wrap bg-slate-500 p-6">
@@ -21,7 +21,7 @@
     <div>
       <span
         class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0"
-        >Points: 0</span
+        >Points: {$gradeTally}</span
       >
     </div>
   </div>
