@@ -1,17 +1,23 @@
-import { PQueue, Queue, pLimit } from './deps.js';
+import { pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
-import { sql } from './database/database.js';
-import { serve } from './deps.js';
-
-const queue = new Queue();
+import { cacheMethodCalls } from './util/cacheUtil.js';
+// import { sql } from './database/database.js';
+// import { serve } from './deps.js';
 
 const limit = pLimit(99);
 
 const nonidenticalSubmissions = [];
 
+//* Using redis caching
+const cachedProgrammingAssignmentService = cacheMethodCalls(
+  programmingAssignmentService,
+  ['answerAssignment', 'updateSubmission', 'gradeSubmission']
+);
+
+//* fetch all assignments
 const handleFindAll = async () => {
   try {
-    const assignments = await programmingAssignmentService.findAll();
+    const assignments = await cachedProgrammingAssignmentService.findAll();
 
     return Response.json(assignments, { status: 200 });
   } catch (err) {
@@ -19,6 +25,7 @@ const handleFindAll = async () => {
   }
 };
 
+//* get assignments by id
 const handleFindOne = async (request, urlPatternResult) => {
   const id = urlPatternResult.pathname.groups.id;
 
@@ -42,7 +49,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
       json?.user_uuid?.length > 0 &&
       json?.user_uuid !== ''
     ) {
-      await programmingAssignmentService.answerAssignment(
+      await cachedProgrammingAssignmentService.answerAssignment(
         programming_assignment_id,
         json?.code,
         json?.user_uuid
@@ -60,7 +67,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
         );
 
       const userSubmissions =
-        await programmingAssignmentService.getAllSubmissionsByUser(
+        await cachedProgrammingAssignmentService.getAllSubmissionsByUser(
           userLatestSubmission?.user_uuid
         );
 
@@ -74,9 +81,10 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
 
       if (!foundCodeAndAssignmentDuplicate) {
         let init = limit(async () => {
-          const submission = await programmingAssignmentService.gradeSubmission(
-            userLatestSubmission
-          );
+          const submission =
+            await cachedProgrammingAssignmentService.gradeSubmission(
+              userLatestSubmission
+            );
           const json = await submission.json();
 
           const dataAfterSubmission = {
@@ -102,6 +110,8 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           (promise) => promise.id === userLatestSubmission.id
         );
 
+        console.log('RESULT', result)
+
         return Response.json(result, {
           status: 200,
         });
@@ -115,6 +125,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     return new Response(err.message, { status: 400 });
   }
 };
+
 
 const handleGrading = async (request, urlPatternResult) => {
   try {
@@ -164,7 +175,7 @@ const handleUpdateSubmission = async (request, urlPatternResult) => {
     const body = await request.text();
     const json = await JSON.parse(body);
 
-    await programmingAssignmentService.updateSubmission(
+    await cachedProgrammingAssignmentService.updateSubmission(
       id,
       json.grader_feedback,
       json?.status,
@@ -214,7 +225,9 @@ const handleSubmissionsByUser = async (request, urlPatternResult) => {
     const user_uuid = urlPatternResult.pathname.groups.user_uuid;
 
     const userSubmissions =
-      await programmingAssignmentService.getAllSubmissionsByUser(user_uuid);
+      await cachedProgrammingAssignmentService.getAllSubmissionsByUser(
+        user_uuid
+      );
 
     return Response.json(userSubmissions, { status: 200 });
   } catch (err) {
@@ -240,7 +253,6 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
     return Response.json({ error: err.message }, { status: 404 });
   }
 };
-
 
 const urlMapping = [
   {
