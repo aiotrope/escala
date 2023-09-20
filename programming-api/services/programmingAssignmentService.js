@@ -99,9 +99,8 @@ const gradeSubmission = async (submission) => {
   }
 };
 
-const deleteUser = async (user_uuid) => {
-  await sql`DELETE FROM programming_assignment_submissions WHERE user_uuid=${user_uuid};`;
-};
+
+
 
 export {
   findAll,
@@ -114,5 +113,4 @@ export {
   findSubmissionById,
   getAllSubmissionsByUser,
   gradeSubmission,
-  deleteUser,
 };

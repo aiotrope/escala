@@ -25,7 +25,7 @@ GET http://localhost:7800/api/grade HTTP/1.1
 
 
 ### check user exists 
-GET http://localhost:7800/api/user/f9d15076-bc40-4cdf-874d-af8b259667d4 HTTP/1.1
+GET http://localhost:7800/api/user/637ec848-4444-40e7-bcc8-5c6140f4248d HTTP/1.1
 
 
 

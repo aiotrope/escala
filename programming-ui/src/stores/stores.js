@@ -7,7 +7,7 @@ if (!user) {
   localStorage.setItem('userUuid', user);
 }
 
-const userUuid = writable(user);
+const userUuid = readable(user);
 
 let assignmentList = [];
 
@@ -19,4 +19,6 @@ let submissions = writable([]);
 
 let gradeTally = writable(0);
 
-export { userUuid, assignments, submissions, userOnDb, gradeTally };
+let assignmentIndex = writable(0)
+
+export { userUuid, assignments, submissions, userOnDb, gradeTally, assignmentIndex };

@@ -191,58 +191,6 @@ const fetchCurrentUserSavedOnDb = async (userUuid) => {
   }
 };
 
-const getTotalPoints = async (submission) => {
-  let sub1 = 0;
-  let sub2 = 0;
-  let sub3 = 0;
-
-  const submissions = await fetchAllUserSubmission(submission?.user_uuid);
-
-  const newSubmission = submissions[0];
-
-  console.log(newSubmission);
-
-  if (newSubmission?.correct && submission?.programming_assignment_id === 1) {
-    sub1 = 100;
-  }
-
-  if (newSubmission?.correct && submission?.programming_assignment_id === 2) {
-    sub2 = 100;
-  }
-
-  if (newSubmission?.correct && submission?.programming_assignment_id === 3) {
-    sub3 = 100;
-  }
-
-  let points = sub1 + sub2 + sub3;
-  return points;
-};
-
-const deleteUser = async (userId) => {
-  const options = {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-      'Content-type': 'application/json',
-    },
-  };
-  try {
-    const url = `/api/assignments/submissions/user/${userId}`;
-
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Error deleting user!`
-      );
-    }
-
-    return response;
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
@@ -254,8 +202,6 @@ const assignmentService = {
   fetchCurrentUserSavedOnDb,
   gradeSubmission,
   gradeSubmissionPromise,
-  getTotalPoints,
-  deleteUser,
 };
 
 export default assignmentService;

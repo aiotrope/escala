@@ -79,20 +79,6 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           );
           const json = await submission.json();
 
-          /* const updateSubmissionData = {
-            id: userLatestSubmission?.id,
-            grader_feedback: json?.result,
-            status: 'processed',
-            correct: json?.result === 'passes test' ? true : false,
-          };
-
-          await sql`UPDATE programming_assignment_submissions SET ${sql(
-            updateSubmissionData,
-            'grader_feedback',
-            'status',
-            'correct'
-          )} WHERE id=${updateSubmissionData.id} returning *`; */
-
           const dataAfterSubmission = {
             id: userLatestSubmission?.id,
             user_uuid: userLatestSubmission?.user_uuid,
@@ -255,15 +241,6 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
   }
 };
 
-const handleDeleteUserSubmissions = async (request, urlPatternResult) => {
-  const user_uuid = urlPatternResult.pathname.groups.user_uuid;
-  try {
-    await programmingAssignmentService.deleteUser(user_uuid);
-    return new Response('Delete user & submissions', { status: 200 });
-  } catch (err) {
-    return Response.json({ error: err.message }, { status: 400 });
-  }
-};
 
 const urlMapping = [
   {
@@ -324,13 +301,6 @@ const urlMapping = [
         '/assignments/submissions/latest-submission/:programming_assignment_id/:user_uuid',
     }),
     fn: handleGetUserLatestSubmission,
-  },
-  {
-    method: 'DELETE',
-    pattern: new URLPattern({
-      pathname: '/assignments/submissions/user/:user_uuid',
-    }),
-    fn: handleDeleteUserSubmissions,
   },
 ];
 

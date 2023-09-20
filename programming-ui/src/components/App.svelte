@@ -7,13 +7,14 @@
     submissions,
     userOnDb,
     gradeTally,
+    assignmentIndex,
   } from '../stores/stores.js';
 
   import assignmentService from '../services/assignmentService.js';
 
   import Form from './Form.svelte';
 
-  let assignmentIndex = 0;
+  // let assignmentIndex = 0;
 
   let code;
 
@@ -26,6 +27,8 @@
   let isInCorrect = true;
 
   let currentUserUuid;
+
+  let currentAssignmentIndex;
 
   onMount(async () => {
     const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
@@ -42,12 +45,63 @@
   });
 
   onMount(async () => {
+    if (currentUserOnDb.exists) {
+      const userSubmissions = await assignmentService.fetchAllUserSubmission(
+        $userUuid
+      );
+
+      const processedSubmissions = userSubmissions.filter(
+        (sub) => sub.status === 'processed'
+      );
+
+      const assignmentId = processedSubmissions[0].programming_assignment_id;
+
+      const index = $assignments.map((i) => i.id).indexOf(assignmentId);
+
+      assignmentIndex.set(index);
+    } else {
+      assignmentIndex.set(0);
+    }
+  });
+
+  onMount(async () => {
     let fetchInterval = setInterval(async () => {
       const userSubmissions = await assignmentService.fetchAllUserSubmission(
         $userUuid
       );
 
-      submissions.set(userSubmissions);
+      const userGradedSubmissions = userSubmissions.filter(
+        (json) => json?.status === 'processed' && json?.grader_feedback !== null
+      );
+
+      const countSub1 = userSubmissions.filter(
+        (sub) =>
+          sub.programming_assignment_id === 1 &&
+          sub.status === 'processed' &&
+          sub.correct
+      ).length;
+      const countSub2 = userSubmissions.filter(
+        (sub) =>
+          sub.programming_assignment_id === 2 &&
+          sub.status === 'processed' &&
+          sub.correct
+      ).length;
+      const countSub3 = userSubmissions.filter(
+        (sub) =>
+          sub.programming_assignment_id === 3 &&
+          sub.status === 'processed' &&
+          sub.correct
+      ).length;
+
+      const sub1 = countSub1 > 0 ? 100 : 0;
+      const sub2 = countSub2 > 0 ? 100 : 0;
+      const sub3 = countSub3 > 0 ? 100 : 0;
+
+      const points = sub1 + sub2 + sub3;
+
+      gradeTally.set(points);
+
+      submissions.set(userGradedSubmissions);
     }, 1000);
 
     return () => {
@@ -59,10 +113,8 @@
     const createSubmission = await assignmentService.createSubmission(
       $userUuid,
       code,
-      assignmentIndex
+      currentAssignmentIndex
     );
-
-    console.log('CREATED SUBS', createSubmission);
 
     const userExists = await assignmentService.checkUserExists($userUuid);
 
@@ -84,44 +136,50 @@
       );
 
       if (!foundCodeAndAssignmentDuplicate) {
-        let points = await assignmentService.getTotalPoints(
-          userLatestSubmission
-        );
-        console.log(points);
-        gradeTally.update((currentData) => currentData + points);
-
         await assignmentService.updateSubmission(createSubmission);
+
+        code =
+          createSubmission?.result === 'passes test'
+            ? ''
+            : userLatestSubmission?.code;
       } else {
         alert('Identical code on a given assignment. Submission not graded!');
       }
     }
-    code = createSubmission.result === 'passes test' ? '' : code;
   };
 
-  const deleteUser = async () => {
-    localStorage.clear()
+  const loadCurrentUserSubmissionStatus = async () => {
+    if (currentUserOnDb?.exists) {
+      const userSubmissions = await assignmentService.fetchAllUserSubmission(
+        $userUuid
+      );
 
-    userOnDb.update((currentData) => currentData);
+      const processedSubmissions = userSubmissions.filter(
+        (sub) => sub.status === 'processed'
+      );
 
-    userUuid.update((currentData) => currentData);
+      const assignmentId = processedSubmissions[0].programming_assignment_id;
 
-    submissions.update((currentData) => currentData);
+      code = processedSubmissions[0].correct
+        ? ''
+        : processedSubmissions[0].code;
 
-    gradeTally.update((currentData) => currentData);
-
-    assignmentIndex = 0;
-
-    code = ''
-
-    isInCorrect = true;
-
-    return await assignmentService.deleteUser($userUuid);
+      const checkSubmission =
+        await assignmentService.findCurrentUserLastSubmission(
+          assignmentId,
+          $userUuid
+        );
+    }
   };
+
+  (async () => {
+    await loadCurrentUserSubmissionStatus();
+  })();
 
   const updateIndex = () => {
-    assignmentIndex++;
+    assignmentIndex.update((currentValue) => currentValue + 1);
     isInCorrect = true;
-    assignmentIndex %= $assignments.length;
+    $assignmentIndex %= $assignments.length;
   };
 
   let unsubscribeUserOnDb = userOnDb.subscribe((currentValue) => {
@@ -140,6 +198,10 @@
     currentUserUuid = currentValue;
   });
 
+  let unsubscribeAssignmentIndex = assignmentIndex.subscribe((currentValue) => {
+    currentAssignmentIndex = currentValue;
+  });
+
   onDestroy(unsubscribeUserOnDb);
 
   onDestroy(unsubscribeSubmission);
@@ -147,6 +209,8 @@
   onDestroy(unsubscribeGradeTally);
 
   onDestroy(unsubscribeUserUuid);
+
+  onDestroy(unsubscribeAssignmentIndex);
 </script>
 
 <div class="md:w-2/5">
@@ -157,14 +221,14 @@
   </div>
 
   <h1 class="text-2xl mb-5">
-    Problem # {$assignments[assignmentIndex]?.assignment_order}: {$assignments[
-      assignmentIndex
+    Problem # {$assignments[currentAssignmentIndex]?.assignment_order}: {$assignments[
+      currentAssignmentIndex
     ]?.title}
   </h1>
   <section class="mt-2 mb-8">
     <p class="text-xl my-2">Problem Handout</p>
     <p class="text-base my-2 md:text-lg">
-      {$assignments[assignmentIndex]?.handout}
+      {$assignments[currentAssignmentIndex]?.handout}
     </p>
   </section>
 
@@ -174,8 +238,7 @@
       {submitAnswer}
       {updateIndex}
       {isInCorrect}
-      {assignmentIndex}
-      {deleteUser}
+      {currentAssignmentIndex}
     />
   </section>
 
@@ -188,7 +251,7 @@
         {#each currentSubmissions as data}
           <li>
             {#if data?.id}
-              {data?.id} - {data?.programming_assignment_id} - {data?.grader_feedback}
+              {data?.id} - {data?.programming_assignment_id} - {data?.code}
               - {data?.correct ? 'Correct' : 'Incorrect'}
             {/if}
           </li>
