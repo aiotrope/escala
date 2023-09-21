@@ -30,7 +30,7 @@ const handleFindOne = async (request, urlPatternResult) => {
   const id = urlPatternResult.pathname.groups.id;
 
   try {
-    const assignment = await programmingAssignmentService.findOne(id);
+    const assignment = await cachedProgrammingAssignmentService.findOne(id);
     return Response.json(assignment, { status: 200 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 404 });
@@ -56,13 +56,13 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
       );
 
       const findUserLatestSubmission =
-        await programmingAssignmentService.findUserLatestSubmission(
+        await cachedProgrammingAssignmentService.findUserLatestSubmission(
           programming_assignment_id,
           json?.user_uuid
         );
 
       const userLatestSubmission =
-        await programmingAssignmentService.findSubmissionById(
+        await cachedProgrammingAssignmentService.findSubmissionById(
           findUserLatestSubmission?.id
         );
 
@@ -133,7 +133,7 @@ const handleGrading = async (request, urlPatternResult) => {
     const json = await JSON.parse(body);
     const programming_assignment_id = urlPatternResult.pathname.groups.id;
 
-    const assignment = await programmingAssignmentService.findOne(
+    const assignment = await cachedProgrammingAssignmentService.findOne(
       programming_assignment_id
     );
 
@@ -160,7 +160,7 @@ const handleGrading = async (request, urlPatternResult) => {
 
 const handleGetAllAnswers = async () => {
   try {
-    const answers = await programmingAssignmentService.getAllAnswers();
+    const answers = await cachedProgrammingAssignmentService.getAllAnswers();
 
     return Response.json(answers, { status: 200 });
   } catch (err) {
@@ -182,9 +182,8 @@ const handleUpdateSubmission = async (request, urlPatternResult) => {
       json?.correct
     );
 
-    const submission = await programmingAssignmentService.findSubmissionById(
-      id
-    );
+    const submission =
+      await cachedProgrammingAssignmentService.findSubmissionById(id);
 
     return Response.json(submission, { status: 200 });
   } catch (err) {
@@ -196,7 +195,7 @@ const handleCheckUserExists = async (request, urlPatternResult) => {
   const user_uuid = urlPatternResult.pathname.groups.user_uuid;
 
   try {
-    const exists = await programmingAssignmentService.checkUserExists(
+    const exists = await cachedProgrammingAssignmentService.checkUserExists(
       user_uuid
     );
     return Response.json(exists[0], { status: 200 });
@@ -208,9 +207,8 @@ const handleCheckUserExists = async (request, urlPatternResult) => {
 const handleFindSubmission = async (request, urlPatternResult) => {
   try {
     const id = urlPatternResult.pathname.groups.id;
-    const submission = await programmingAssignmentService.findSubmissionById(
-      id
-    );
+    const submission =
+      await cachedProgrammingAssignmentService.findSubmissionById(id);
 
     console.log(submission);
 
@@ -243,7 +241,7 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
 
   try {
     const userLatestSubmission =
-      await programmingAssignmentService.findUserLatestSubmission(
+      await cachedProgrammingAssignmentService.findUserLatestSubmission(
         programming_assignment_id,
         user_uuid
       );

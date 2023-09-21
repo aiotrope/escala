@@ -247,16 +247,13 @@
     <p>Current User exists: {currentUserOnDb?.exists}</p>
 
     {#if currentSubmissions?.length}
-      <ul>
+      <div>
         {#each currentSubmissions as data}
-          <li>
-            {#if data?.id}
-              {data?.id} - {data?.programming_assignment_id} - {data?.code}
-              - {data?.correct ? 'Correct' : 'Incorrect'}
-            {/if}
-          </li>
+          <p class={`${data.correct ? 'text-green-500' : 'text-red-500'}`}>
+            {data?.correct ? 'Correct' : 'Incorrect'}
+          </p>
         {/each}
-      </ul>
+      </div>
     {:else}
       <p>
         There are {$assignments.length} Python problem sets needed to be answered.
