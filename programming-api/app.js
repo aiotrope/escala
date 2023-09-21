@@ -2,7 +2,7 @@ import { pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 import { cacheMethodCalls } from './util/cacheUtil.js';
 // import { sql } from './database/database.js';
-// import { serve } from './deps.js';
+import { serve } from './deps.js';
 
 const limit = pLimit(99);
 
@@ -110,7 +110,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           (promise) => promise.id === userLatestSubmission.id
         );
 
-        console.log('RESULT', result)
+        console.log('RESULT', result);
 
         return Response.json(result, {
           status: 200,
@@ -125,7 +125,6 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     return new Response(err.message, { status: 400 });
   }
 };
-
 
 const handleGrading = async (request, urlPatternResult) => {
   try {
