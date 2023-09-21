@@ -43,84 +43,105 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     const json = await JSON.parse(body);
     const programming_assignment_id = urlPatternResult.pathname.groups.id;
 
-    if (
-      json?.code?.length > 0 &&
-      json?.code !== '' &&
-      json?.user_uuid?.length > 0 &&
-      json?.user_uuid !== ''
-    ) {
-      await cachedProgrammingAssignmentService.answerAssignment(
+    if (limit.activeCount !== 0) {
+      console.log('ACTIVE', limit.activeCount);
+      return Response.json(
+        { error: 'There are still submissions on process for grading' },
+        {
+          status: 422,
+        }
+      );
+    }
+
+    if (json?.code?.length === 0 || json?.code === '') {
+      return Response.json(
+        { error: 'Code field is required!' },
+        { status: 400 }
+      );
+    }
+
+    await cachedProgrammingAssignmentService.answerAssignment(
+      programming_assignment_id,
+      json?.code,
+      json?.user_uuid
+    );
+
+    const findUserLatestSubmission =
+      await cachedProgrammingAssignmentService.findUserLatestSubmission(
         programming_assignment_id,
-        json?.code,
         json?.user_uuid
       );
 
-      const findUserLatestSubmission =
-        await cachedProgrammingAssignmentService.findUserLatestSubmission(
-          programming_assignment_id,
-          json?.user_uuid
-        );
-
-      const userLatestSubmission =
-        await cachedProgrammingAssignmentService.findSubmissionById(
-          findUserLatestSubmission?.id
-        );
-
-      const userSubmissions =
-        await cachedProgrammingAssignmentService.getAllSubmissionsByUser(
-          userLatestSubmission?.user_uuid
-        );
-
-      const foundCodeAndAssignmentDuplicate = userSubmissions.find(
-        (sub) =>
-          sub?.id !== userLatestSubmission?.id &&
-          sub.code === userLatestSubmission?.code &&
-          sub?.programming_assignment_id ===
-            userLatestSubmission?.programming_assignment_id
+    const userLatestSubmission =
+      await cachedProgrammingAssignmentService.findSubmissionById(
+        findUserLatestSubmission?.id
       );
 
-      if (!foundCodeAndAssignmentDuplicate) {
-        let init = limit(async () => {
-          const submission =
-            await cachedProgrammingAssignmentService.gradeSubmission(
-              userLatestSubmission
-            );
-          const json = await submission.json();
+    const userSubmissions =
+      await cachedProgrammingAssignmentService.getAllSubmissionsByUser(
+        userLatestSubmission?.user_uuid
+      );
 
-          const dataAfterSubmission = {
-            id: userLatestSubmission?.id,
-            user_uuid: userLatestSubmission?.user_uuid,
-            programming_assignment_id:
-              userLatestSubmission?.programming_assignment_id,
-            result: json?.result,
-          };
+    const foundCodeAndAssignmentDuplicate = userSubmissions.find(
+      (sub) =>
+        sub?.id !== userLatestSubmission?.id &&
+        sub.code === userLatestSubmission?.code &&
+        sub?.programming_assignment_id ===
+          userLatestSubmission?.programming_assignment_id
+    );
 
-          return dataAfterSubmission;
-        });
+    if (!foundCodeAndAssignmentDuplicate) {
+      let init = limit(async () => {
+        const submission =
+          await cachedProgrammingAssignmentService.gradeSubmission(
+            userLatestSubmission
+          );
+        const json = await submission.json();
 
-        nonidenticalSubmissions.push(init);
+        const dataAfterSubmission = {
+          id: userLatestSubmission?.id,
+          user_uuid: userLatestSubmission?.user_uuid,
+          programming_assignment_id:
+            userLatestSubmission?.programming_assignment_id,
+          result: json?.result,
+        };
 
-        const promises = await Promise.all(
-          nonidenticalSubmissions.map(async (submission) => {
-            return await submission;
-          })
-        );
+        return dataAfterSubmission;
+      });
 
-        const result = promises.find(
-          (promise) => promise.id === userLatestSubmission.id
-        );
+      nonidenticalSubmissions.push(init);
 
-        console.log('RESULT', result);
+      const promises = await Promise.all(
+        nonidenticalSubmissions.map(async (submission) => {
+          nonidenticalSubmissions.splice(
+            nonidenticalSubmissions.indexOf(submission),
+            1
+          );
 
-        return Response.json(result, {
-          status: 200,
-        });
+          return await submission;
+        })
+      );
+
+      if (
+        nonidenticalSubmissions.length === 0 &&
+        limit.activeCount === 0 &&
+        limit.pendingCount === 0
+      ) {
+        limit.clearQueue();
       }
 
-      return Response.json(userLatestSubmission, { status: 200 });
-    } else {
-      return new Response('Code field is required!', { status: 400 });
+      const result = promises.find(
+        (promise) => promise.id === userLatestSubmission.id
+      );
+
+      console.log('RESULT', result);
+
+      return Response.json(result, {
+        status: 200,
+      });
     }
+
+    return Response.json(userLatestSubmission, { status: 200 });
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }

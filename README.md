@@ -5,13 +5,13 @@ DBSWA: Project 1
 ## CLI Commands
 
 ```bash
+# buid/rebuild docker images based on docker-compose on debug mode; running on port 7800
+cd escala && docker compose up --build
+cd grader-image && docker build -t grader-image .
 
-# buid/rebuild docker images based on docker-compose
-$ cd escala && docker compose up --build
-$ cd grader-image && docker build -t grader-image .
-
-# start app at the root directory; application running on port 7800 (production); first run
-$ cd escala && docker compose -f docker-compose.prod.yml -d
+# buid/rebuild docker images based on docker-compose on production mode; running on port 7800
+cd grader-image && docker build -t grader-image .
+cd escala && docker compose -f docker-compose.prod.yml up -d
 
 # build images individually based on Dockerfile
 $ cd grader-api && docker build -t grader-api .

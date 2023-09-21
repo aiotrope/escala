@@ -74,9 +74,14 @@ const createSubmission = async (userUuid, code, assignmentIndex) => {
 
       const response = await fetch(url, options);
 
-      if (!response.ok) {
+      if (response.status === 400) {
         throw new Error(
-          `${response.status} - ${response.statusText} - Cannot submit answer!`
+          `${response.status} - ${response.statusText}  - Code field is required`
+        );
+      }
+      if (response.status === 422) {
+        throw new Error(
+          `${response.status} - ${response.statusText}  - Grading submissions are not yet resolve. Try again`
         );
       }
 
