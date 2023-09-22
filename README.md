@@ -5,13 +5,17 @@ DBSWA: Project 1
 ## CLI Commands
 
 ```bash
-# buid/rebuild docker images based on docker-compose on debug mode; running on port 7800
-cd escala && docker compose up --build
-cd grader-image && docker build -t grader-image .
-
-# buid/rebuild docker images based on docker-compose on production mode; running on port 7800
+# buid docker images based on docker-compose on production mode; running on port 7800 (first build)
 cd grader-image && docker build -t grader-image .
 cd escala && docker compose -f docker-compose.prod.yml up -d
+# to restart or rebuild on prod mode; running on port 7800
+docker compose -f docker-compose.prod.yml up --build -d
+
+# buid/rebuild ocker images based on docker-compose on debug mode; running on port 7800 (first build)
+cd grader-image && docker build -t grader-image .
+cd escala && docker compose up --build
+# to restart on debug mode
+cd escala && docker compose up
 
 # build images individually based on Dockerfile
 $ cd grader-api && docker build -t grader-api .
@@ -19,17 +23,14 @@ $ cd programming-api && docker build -t programming-ui .
 $ cd programming-ui && docker build -t programming-ui .
 $ cd grader-image && docker build -t grader-image .
 
-# running buit images
-$ cd escala && docker compose up
-
 # stop running app and remove app cache
 $ docker compose down && rm -rf app-cache
 
-# start app on succeeding run
-$ docker compose up
+# stop running app all modes
+$ docker compose down
 
-# delete all volumes, containers, volumes
-$ docker system prune -a && docker images prune && docker volume rm $(docker volume ls -q)
+# clean slate docker hub; some of the containers, images, volume must be remove manually
+$ docker system prune -a && docker images prune -a && docker volume rm $(docker volume ls -q) && docker volume prune -a
 
 # run unit test on dev mode
 # check the browser if there are errors or make a post request to verify, then repeat the steps before running the test

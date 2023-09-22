@@ -11,7 +11,7 @@ const nonidenticalSubmissions = [];
 //* Using redis caching
 const cachedProgrammingAssignmentService = cacheMethodCalls(
   programmingAssignmentService,
-  ['answerAssignment', 'updateSubmission', 'gradeSubmission']
+  ['answerAssignment', 'updateSubmission']
 );
 
 //* fetch all assignments
@@ -43,7 +43,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     const json = await JSON.parse(body);
     const programming_assignment_id = urlPatternResult.pathname.groups.id;
 
-    if (limit.activeCount !== 0) {
+    if (limit.activeCount !== 0 || limit.pendingCount !== 0) {
       console.log('ACTIVE', limit.activeCount);
       return Response.json(
         { error: 'There are still submissions on process for grading' },
@@ -53,7 +53,7 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
       );
     }
 
-    if (json?.code?.length === 0 || json?.code === '') {
+    if (!json?.code || !json?.user_uuid) {
       return Response.json(
         { error: 'Code field is required!' },
         { status: 400 }
@@ -96,14 +96,14 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
           await cachedProgrammingAssignmentService.gradeSubmission(
             userLatestSubmission
           );
-        const json = await submission.json();
+        const jsonData = await submission.json();
 
         const dataAfterSubmission = {
           id: userLatestSubmission?.id,
           user_uuid: userLatestSubmission?.user_uuid,
           programming_assignment_id:
             userLatestSubmission?.programming_assignment_id,
-          result: json?.result,
+          result: jsonData?.result,
         };
 
         return dataAfterSubmission;
@@ -146,7 +146,6 @@ const handleAnswerAssignment = async (request, urlPatternResult) => {
     return new Response(err.message, { status: 400 });
   }
 };
-
 const handleGrading = async (request, urlPatternResult) => {
   try {
     const body = await request.text();

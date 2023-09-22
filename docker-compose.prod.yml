@@ -1,16 +1,17 @@
 version: "3.9"
 
-volumes:
-  astro_node_modules:
-
 services:
   nginx:
     image: nginx:latest
+    restart: on-failure
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - programming-api
       - programming-ui
+    networks:
+      - backnet
+      - frontnet
     ports:
       - 7800:7800
 
@@ -19,13 +20,18 @@ services:
       context: programming-api
       dockerfile: Dockerfile.prod
     image: programming-api-prod
-    restart: "on-failure"
     expose:
       - 7777
     depends_on:
       - database
       - flyway
       - redis
+    networks:
+      - backnet
+      - frontnet
+    volumes:
+      - ./programming-api/:/app
+      - ./app-cache/:/app-cache
     env_file:
       - project.env
     deploy:
@@ -41,11 +47,13 @@ services:
       context: programming-ui
       dockerfile: Dockerfile.prod
     image: programming-ui-prod
-    restart: "on-failure"
     ports:
       - 3000:80
     depends_on:
       - programming-api
+    networks:
+      - backnet
+      - frontnet
     deploy:
       restart_policy:
         condition: on-failure
@@ -58,13 +66,18 @@ services:
       context: grader-api
       dockerfile: Dockerfile.prod
     image: grader-api-prod
-    restart: "on-failure"
     depends_on:
       - database
       - flyway
       - redis
     env_file:
       - project.env
+    networks:
+      - backnet
+    volumes:
+      - ./grader-api/:/app
+      - ./app-cache/:/app-cache
+      - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
       restart_policy:
         condition: on-failure
@@ -73,26 +86,34 @@ services:
         window: '30s'
 
   database:
-    container_name: database-server
+    container_name: database-server-dab-p1-b7c7d0d1-d2ff-4ef4-9553-e95ea3225629
     image: postgres:14.1
-    restart: unless-stopped
+    restart: on-failure
     volumes:
       - ./production-database-data:/var/lib/postgresql/data
+    networks:
+      - backnet
     env_file:
       - project.env
 
   flyway:
     image: flyway/flyway:9.11.0-alpine
+    restart: on-failure
     depends_on:
       - database
     volumes:
       - ./flyway/sql/:/flyway/sql
     command: -connectRetries=60 -baselineOnMigrate=true migrate
+    networks:
+      - backnet
     env_file:
       - project.env
   
   pgadmin:
     image: dpage/pgadmin4:6.20
+    restart: on-failure
+    networks:
+      - backnet
     env_file:
       - project.env
     depends_on:
@@ -101,8 +122,11 @@ services:
   redis:
     image: redis:latest
     command: redis-server /usr/local/etc/redis/redis.conf
+    restart: on-failure
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - backnet
     expose:
       - 6379
   
@@ -115,3 +139,22 @@ services:
       - nginx
     volumes:
       - ./e2e-playwright/tests:/e2e-playwright/tests
+  
+  grader-image:
+    build:
+      context: grader-image
+      dockerfile: Dockerfile
+    image: grader-image
+    restart: on-failure
+    depends_on:
+      - database
+      - programming-api
+    networks:
+      - backnet
+
+volumes:
+  astro_node_modules:
+
+networks:
+  backnet:
+  frontnet:
