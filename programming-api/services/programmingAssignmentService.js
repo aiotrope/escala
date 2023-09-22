@@ -39,7 +39,8 @@ const findSubmissionById = async (submissionId) => {
 };
 
 const getAllAnswers = async () => {
-  const answers = await sql`SELECT * FROM programming_assignment_submissions;`;
+  const answers =
+    await sql`SELECT * FROM programming_assignment_submissions ORDER BY last_updated DESC;`;
   return answers;
 };
 

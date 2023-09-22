@@ -31,82 +31,104 @@
   let currentAssignmentIndex;
 
   onMount(async () => {
-    const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
-      $userUuid
-    );
-
-    userOnDb.set(userSavedOnDb);
-  });
-
-  onMount(async () => {
     const allAssignments = await assignmentService.fetchAllAssignments();
 
     assignments.set(allAssignments);
-  });
-
-  onMount(async () => {
-    if (currentUserOnDb.exists) {
-      const userSubmissions = await assignmentService.fetchAllUserSubmission(
-        $userUuid
-      );
-
-      const processedSubmissions = userSubmissions.filter(
-        (sub) => sub.status === 'processed'
-      );
-
-      const assignmentId = processedSubmissions[0].programming_assignment_id;
-
-      const index = $assignments.map((i) => i.id).indexOf(assignmentId);
-
-      assignmentIndex.set(index);
-    } else {
-      assignmentIndex.set(0);
-    }
-  });
-
-  onMount(async () => {
     let fetchInterval = setInterval(async () => {
-      const userSubmissions = await assignmentService.fetchAllUserSubmission(
-        $userUuid
-      );
-
-      const userGradedSubmissions = userSubmissions.filter(
-        (json) => json?.status === 'processed' && json?.grader_feedback !== null
-      );
-
-      const countSub1 = userSubmissions.filter(
-        (sub) =>
-          sub.programming_assignment_id === 1 &&
-          sub.status === 'processed' &&
-          sub.correct
-      ).length;
-      const countSub2 = userSubmissions.filter(
-        (sub) =>
-          sub.programming_assignment_id === 2 &&
-          sub.status === 'processed' &&
-          sub.correct
-      ).length;
-      const countSub3 = userSubmissions.filter(
-        (sub) =>
-          sub.programming_assignment_id === 3 &&
-          sub.status === 'processed' &&
-          sub.correct
-      ).length;
-
-      const sub1 = countSub1 > 0 ? 100 : 0;
-      const sub2 = countSub2 > 0 ? 100 : 0;
-      const sub3 = countSub3 > 0 ? 100 : 0;
-
-      const points = sub1 + sub2 + sub3;
-
-      gradeTally.set(points);
-
-      submissions.set(userGradedSubmissions);
-    }, 1000);
+      assignments.set(allAssignments);
+    }, 2000);
 
     return () => {
       clearInterval(fetchInterval);
     };
+  });
+
+  onMount(async () => {
+    const findAllAnswers = await assignmentService.findAllAnswers();
+
+    if (findAllAnswers.length === 0 && !currentUserOnDb?.exists) {
+      let user = crypto.randomUUID().toString();
+      userUuid.set(user);
+      // assignmentIndex.set(0);
+    }
+  });
+
+  onMount(async () => {
+    const findAllAnswers = await assignmentService.findAllAnswers();
+
+    let user;
+
+    let fetchInterval;
+
+    if (findAllAnswers.length !== 0) {
+      fetchInterval = setInterval(async () => {
+        user = findAllAnswers[0].user_uuid;
+
+        userUuid.set(user);
+
+        const userSubmissions = await assignmentService.fetchAllUserSubmission(
+          user
+        );
+
+        const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
+          user
+        );
+
+        userOnDb.set(userSavedOnDb);
+
+        const processedSubmissions = userSubmissions.filter(
+          (sub) => sub.status === 'processed'
+        );
+ 
+        const assignmentId = processedSubmissions[0].programming_assignment_id;
+
+        const userCurrentGrade = processedSubmissions[0].grader_feedback
+
+        const evaluate = userCurrentGrade === 'passes test' ? assignmentId + 1 : assignmentId
+
+        const index = $assignments.map((i) => i.id).indexOf(evaluate);
+
+        assignmentIndex.set(index);
+
+        const userGradedSubmissions = userSubmissions.filter(
+          (json) =>
+            json?.status === 'processed' && json?.grader_feedback !== null
+        );
+
+        const countSub1 = userSubmissions.filter(
+          (sub) =>
+            sub.programming_assignment_id === 1 &&
+            sub.status === 'processed' &&
+            sub.correct
+        ).length;
+        const countSub2 = userSubmissions.filter(
+          (sub) =>
+            sub.programming_assignment_id === 2 &&
+            sub.status === 'processed' &&
+            sub.correct
+        ).length;
+        const countSub3 = userSubmissions.filter(
+          (sub) =>
+            sub.programming_assignment_id === 3 &&
+            sub.status === 'processed' &&
+            sub.correct
+        ).length;
+
+        const sub1 = countSub1 > 0 ? 100 : 0;
+        const sub2 = countSub2 > 0 ? 100 : 0;
+        const sub3 = countSub3 > 0 ? 100 : 0;
+
+        const points = sub1 + sub2 + sub3;
+
+        gradeTally.set(points);
+
+        submissions.set(userGradedSubmissions);
+      }, 1000);
+
+      return () => {
+        clearInterval(fetchInterval);
+      };
+    }
   });
 
   const submitAnswer = async () => {
@@ -147,34 +169,6 @@
       }
     }
   };
-
-  const loadCurrentUserSubmissionStatus = async () => {
-    if (currentUserOnDb?.exists) {
-      const userSubmissions = await assignmentService.fetchAllUserSubmission(
-        $userUuid
-      );
-
-      const processedSubmissions = userSubmissions.filter(
-        (sub) => sub.status === 'processed'
-      );
-
-      const assignmentId = processedSubmissions[0].programming_assignment_id;
-
-      code = processedSubmissions[0].correct
-        ? ''
-        : processedSubmissions[0].code;
-
-      const checkSubmission =
-        await assignmentService.findCurrentUserLastSubmission(
-          assignmentId,
-          $userUuid
-        );
-    }
-  };
-
-  (async () => {
-    await loadCurrentUserSubmissionStatus();
-  })();
 
   const updateIndex = () => {
     assignmentIndex.update((currentValue) => currentValue + 1);

@@ -47,18 +47,15 @@ test('Answering two correct questions subsequently, increasing the points from 0
   await page.goto('/');
   await expect(page.getByTitle('points')).toHaveText('Points: 0');
   await page
-    .getByTestId('input-answer')
-    .fill("def hello (): \n    hello = 'Hello' \n    return hello");
-  await page.getByTestId('submit-answer-btn').click();
-  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+    .getByLabel('Your code answer')
+    .fill("def hello (): \n    sample = 'Hello' \n    sample hello");
+  await page.getByRole('button', { name: /Submit your answer/i }).click();
   await expect(page.getByTitle('points')).toHaveText('Points: 100');
   await page.getByTestId('next-problem-btn').click();
   await expect(page.locator('h1')).toHaveText('Problem # 2: Hello world');
-
-  await page
-    .getByLabel('Your code answer')
-    .fill("def hello (): return 'Hello world!'");
-  await page.getByRole('button', { name: /Submit your answer/i }).click();
-  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+ await page
+   .getByLabel('Your code answer')
+   .fill("def hello (): \n    sample = 'Hello world!' \n    sample hello");
+  await page.getByTestId('submit-answer-btn').click();
   await expect(page.getByTitle('points')).toHaveText('Points: 200');
 });

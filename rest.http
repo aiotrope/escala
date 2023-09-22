@@ -11,7 +11,7 @@ POST http://localhost:7800/api/assignments/2 HTTP/1.1
 Content-Type: application/json
 
 {
-    "code": "def hello (): return 'Hello world1'",
+    "code": "def hello (): return 'Hello world!'",
     "user_uuid": "user1"
 }
 

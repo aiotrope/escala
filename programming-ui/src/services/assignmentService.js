@@ -1,3 +1,8 @@
+const findAllAnswers = async () => {
+  const response = await fetch('/api/answers');
+
+  return await response.json();
+};
 const checkUserExists = async (uuid) => {
   const response = await fetch(`/api/user/${uuid}`);
 
@@ -13,43 +18,22 @@ const findCurrentUserLastSubmission = async (assignmentId, userId) => {
 };
 
 const findSubmissionById = async (submissionId) => {
-  try {
-    const response = await fetch(
-      `/api/assignments/submissions/${submissionId}`
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - ${submissionId} not found!`
-      );
-    }
-    return await response.json();
-  } catch (error) {
-    alert(error);
-  }
+  const response = await fetch(`/api/assignments/submissions/${submissionId}`);
+  return await response.json();
 };
 
 const fetchAllUserSubmission = async (userUuid) => {
-  try {
-    const response = await fetch(
-      `/api/assignments/submissions/user/all/${userUuid}`
-    );
+  const response = await fetch(
+    `/api/assignments/submissions/user/all/${userUuid}`
+  );
 
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Error fetching all ${userUuid} submissions!`
-      );
-    }
-    const jsonData = await response.json();
+  const jsonData = await response.json();
 
-    const userGradedSubmissions = jsonData.filter(
-      (json) => json?.status === 'processed' && json?.grader_feedback !== null
-    );
+  const userGradedSubmissions = jsonData.filter(
+    (json) => json?.status === 'processed' && json?.grader_feedback !== null
+  );
 
-    return userGradedSubmissions;
-  } catch (error) {
-    alert(error);
-  }
+  return userGradedSubmissions;
 };
 
 const createSubmission = async (userUuid, code, assignmentIndex) => {
@@ -160,35 +144,15 @@ const updateSubmission = async (createdSubmission) => {
 };
 
 const fetchAllAssignments = async () => {
-  try {
-    const response = await fetch('/api/assignments');
+  const response = await fetch('/api/assignments');
 
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Error fetching all assignments!`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    alert(error);
-  }
+  return await response.json();
 };
 
 const fetchCurrentUserSavedOnDb = async (userUuid) => {
-  try {
-    const response = await fetch(`/api/user/${userUuid}`);
+  const response = await fetch(`/api/user/${userUuid}`);
 
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Error fetching ${userUuid}!`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    alert(error);
-  }
+  return await response.json();
 };
 
 const assignmentService = {
@@ -202,6 +166,7 @@ const assignmentService = {
   fetchCurrentUserSavedOnDb,
   gradeSubmission,
   gradeSubmissionPromise,
+  findAllAnswers,
 };
 
 export default assignmentService;
