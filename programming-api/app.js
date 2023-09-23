@@ -1,8 +1,8 @@
 import { pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 import { cacheMethodCalls } from './util/cacheUtil.js';
-// import { sql } from './database/database.js';
-import { serve } from './deps.js';
+
+
 
 const limit = pLimit(99);
 
@@ -271,6 +271,8 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
   }
 };
 
+
+
 const urlMapping = [
   {
     method: 'GET',
@@ -331,6 +333,7 @@ const urlMapping = [
     }),
     fn: handleGetUserLatestSubmission,
   },
+  
 ];
 
 const handleRequest = async (request) => {

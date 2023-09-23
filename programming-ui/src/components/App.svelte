@@ -8,6 +8,7 @@
     userOnDb,
     gradeTally,
     assignmentIndex,
+    answers,
   } from '../stores/stores.js';
 
   import assignmentService from '../services/assignmentService.js';
@@ -30,65 +31,32 @@
 
   let currentAssignmentIndex;
 
-  onMount(async () => {
-    const allAssignments = await assignmentService.fetchAllAssignments();
+  let answerCount = 0;
 
-    assignments.set(allAssignments);
+  $: answerAdded = answerCount;
+
+  onMount(async () => {
     let fetchInterval = setInterval(async () => {
+      const allAssignments = await assignmentService.fetchAllAssignments();
+
+      const allAnswers = await assignmentService.findAllAnswers();
+
+      const userSubmissions = await assignmentService.fetchAllUserSubmission(
+        $userUuid
+      );
+
+      const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
+        $userUuid
+      );
+
+      userOnDb.set(userSavedOnDb);
+
       assignments.set(allAssignments);
-    }, 2000);
 
-    return () => {
-      clearInterval(fetchInterval);
-    };
-  });
+      answers.set(allAnswers);
 
-  onMount(async () => {
-    const findAllAnswers = await assignmentService.findAllAnswers();
-
-    if (findAllAnswers.length === 0 && !currentUserOnDb?.exists) {
-      let user = crypto.randomUUID().toString();
-      userUuid.set(user);
-      // assignmentIndex.set(0);
-    }
-  });
-
-  onMount(async () => {
-    const findAllAnswers = await assignmentService.findAllAnswers();
-
-    let user;
-
-    let fetchInterval;
-
-    if (findAllAnswers.length !== 0) {
-      fetchInterval = setInterval(async () => {
-        user = findAllAnswers[0].user_uuid;
-
-        userUuid.set(user);
-
-        const userSubmissions = await assignmentService.fetchAllUserSubmission(
-          user
-        );
-
-        const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
-          user
-        );
-
-        userOnDb.set(userSavedOnDb);
-
-        const processedSubmissions = userSubmissions.filter(
-          (sub) => sub.status === 'processed'
-        );
- 
-        const assignmentId = processedSubmissions[0].programming_assignment_id;
-
-        const userCurrentGrade = processedSubmissions[0].grader_feedback
-
-        const evaluate = userCurrentGrade === 'passes test' ? assignmentId + 1 : assignmentId
-
-        const index = $assignments.map((i) => i.id).indexOf(evaluate);
-
-        assignmentIndex.set(index);
+      if (allAnswers.length > 0 && allAnswers !== undefined) {
+        $userUuid = allAnswers[0]?.user_uuid;
 
         const userGradedSubmissions = userSubmissions.filter(
           (json) =>
@@ -120,16 +88,33 @@
 
         const points = sub1 + sub2 + sub3;
 
+        const processedSubmissions = allAnswers.filter(
+          (sub) => sub.status === 'processed' && sub.user_uuid === $userUuid
+        );
+
+        const assignmentId = processedSubmissions[0]?.programming_assignment_id;
+
+        const userCurrentGrade = processedSubmissions[0].grader_feedback
+
+        const evaluate =
+          userCurrentGrade === 'passes test' ? assignmentId + 1 : assignmentId;
+
+        const index = $assignments.map((i) => i.id).indexOf(evaluate);
+
         gradeTally.set(points);
 
         submissions.set(userGradedSubmissions);
-      }, 1000);
 
-      return () => {
-        clearInterval(fetchInterval);
-      };
-    }
+        assignmentIndex.set(index);
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(fetchInterval);
+    };
   });
+
+  
 
   const submitAnswer = async () => {
     const createSubmission = await assignmentService.createSubmission(
@@ -141,7 +126,10 @@
     const userExists = await assignmentService.checkUserExists($userUuid);
 
     if (userExists?.exists) {
+      answerCount = ++answerCount;
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
+
+      // userUuid.update(createSubmission?.user_uuid);
 
       const userLatestSubmission = await assignmentService.findSubmissionById(
         createSubmission?.id
@@ -170,7 +158,7 @@
     }
   };
 
-  const updateIndex = () => {
+  const updateIndex = async () => {
     assignmentIndex.update((currentValue) => currentValue + 1);
     isInCorrect = true;
     $assignmentIndex %= $assignments.length;
@@ -205,6 +193,8 @@
   onDestroy(unsubscribeUserUuid);
 
   onDestroy(unsubscribeAssignmentIndex);
+
+  $: console.log(currentAssignmentIndex);
 </script>
 
 <div class="md:w-2/5">
@@ -215,14 +205,14 @@
   </div>
 
   <h1 class="text-2xl mb-5">
-    Problem # {$assignments[currentAssignmentIndex]?.assignment_order}: {$assignments[
-      currentAssignmentIndex
+    Problem # {$assignments[$assignmentIndex]?.assignment_order}: {$assignments[
+      $assignmentIndex
     ]?.title}
   </h1>
   <section class="mt-2 mb-8">
     <p class="text-xl my-2">Problem Handout</p>
     <p class="text-base my-2 md:text-lg">
-      {$assignments[currentAssignmentIndex]?.handout}
+      {$assignments[$assignmentIndex]?.handout}
     </p>
   </section>
 
@@ -240,11 +230,11 @@
     <h3>User submissions</h3>
     <p>Current User exists: {currentUserOnDb?.exists}</p>
 
-    {#if currentSubmissions?.length}
+    {#if $submissions?.length}
       <div>
-        {#each currentSubmissions as data}
+        {#each $submissions as data}
           <p class={`${data.correct ? 'text-green-500' : 'text-red-500'}`}>
-            {data?.correct ? 'Correct' : 'Incorrect'}
+            {data?.correct ? 'Correct' : 'Incorrect'} - {data?.grader_feedback}
           </p>
         {/each}
       </div>
@@ -254,4 +244,5 @@
       </p>
     {/if}
   </section>
+  {currentAssignmentIndex}
 </div>

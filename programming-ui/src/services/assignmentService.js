@@ -29,11 +29,15 @@ const fetchAllUserSubmission = async (userUuid) => {
 
   const jsonData = await response.json();
 
-  const userGradedSubmissions = jsonData.filter(
-    (json) => json?.status === 'processed' && json?.grader_feedback !== null
-  );
+  if (jsonData.length > 0) {
+    const userGradedSubmissions = jsonData.filter(
+      (json) => json?.status === 'processed' && json?.grader_feedback !== null
+    );
 
-  return userGradedSubmissions;
+    return userGradedSubmissions;
+  } else {
+    return jsonData;
+  }
 };
 
 const createSubmission = async (userUuid, code, assignmentIndex) => {
@@ -155,6 +159,8 @@ const fetchCurrentUserSavedOnDb = async (userUuid) => {
   return await response.json();
 };
 
+
+
 const assignmentService = {
   checkUserExists,
   findCurrentUserLastSubmission,
@@ -167,6 +173,7 @@ const assignmentService = {
   gradeSubmission,
   gradeSubmissionPromise,
   findAllAnswers,
+
 };
 
 export default assignmentService;
