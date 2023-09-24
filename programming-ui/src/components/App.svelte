@@ -17,8 +17,6 @@
   import Form from './Form.svelte';
   import Loader from './Loader.svelte';
 
-  // let assignmentIndex = 0;
-
   let code;
 
   let currentUserOnDb;
@@ -31,11 +29,7 @@
 
   let currentAnswers;
 
-  let answerCount = 0;
-
   let isLoading = true;
-
-  $: answerAdded = answerCount;
 
   onMount(async () => {
     const interval = setInterval(async () => {
@@ -52,53 +46,9 @@
           $userUuid
         );
 
-         const userSavedOnDb = await assignmentService.checkUserExists(
+        const userSavedOnDb = await assignmentService.checkUserExists(
           $userUuid
         );
-
-     /*    const userGradedSubmissions = userSubmissions.filter(
-          (json) =>
-            json?.status === 'processed' && json?.grader_feedback !== null
-        ); */
-
-       
-
-       /*  const countSub1 = userSubmissions?.filter(
-          (sub) =>
-            sub?.programming_assignment_id === 1 &&
-            sub?.status === 'processed' &&
-            sub?.correct
-        ).length;
-        const countSub2 = userSubmissions?.filter(
-          (sub) =>
-            sub?.programming_assignment_id === 2 &&
-            sub?.status === 'processed' &&
-            sub?.correct
-        ).length;
-        const countSub3 = userSubmissions?.filter(
-          (sub) =>
-            sub?.programming_assignment_id === 3 &&
-            sub?.status === 'processed' &&
-            sub?.correct
-        ).length;
-
-        const sub1 = countSub1 > 0 ? 100 : 0;
-        const sub2 = countSub2 > 0 ? 100 : 0;
-        const sub3 = countSub3 > 0 ? 100 : 0;
-
-        const points = sub1 + sub2 + sub3;
-
-        const processedSubmissions = allAnswers?.filter(
-          (sub) => sub?.status === 'processed' && sub?.user_uuid === $userUuid
-        );
-
-        const userCurrentCode = processedSubmissions[0]?.code;
-
-        code = userCurrentCode;
-
-        const assignmentId = processedSubmissions[0]?.programming_assignment_id;
-
-        const index = $assignments.map((i) => i.id).indexOf(assignmentId); */
 
         userUuid.set(setUserId);
 
@@ -106,13 +56,61 @@
 
         userOnDb.set(userSavedOnDb);
 
-        // gradeTally.set(points);
-
         submissions.set(userSubmissions);
 
-        isLoading = false;
+        if ($submissions.length > 0 && $submissions !== undefined) {
+          const userGradedSubmissions = $submissions.filter(
+            (json) =>
+              json?.status === 'processed' && json?.grader_feedback !== null
+          );
 
-        // assignmentIndex.set(index);
+          const countSub1 = userGradedSubmissions?.filter(
+            (sub) =>
+              sub?.programming_assignment_id === 1 &&
+              sub?.status === 'processed' &&
+              sub?.correct
+          ).length;
+          const countSub2 = userGradedSubmissions?.filter(
+            (sub) =>
+              sub?.programming_assignment_id === 2 &&
+              sub?.status === 'processed' &&
+              sub?.correct
+          ).length;
+          const countSub3 = userGradedSubmissions?.filter(
+            (sub) =>
+              sub?.programming_assignment_id === 3 &&
+              sub?.status === 'processed' &&
+              sub?.correct
+          ).length;
+
+          const sub1 = countSub1 > 0 ? 100 : 0;
+          const sub2 = countSub2 > 0 ? 100 : 0;
+          const sub3 = countSub3 > 0 ? 100 : 0;
+
+          const points = sub1 + sub2 + sub3;
+
+          const processedSubmissions = $answers?.filter(
+            (sub) => sub?.status === 'processed' && sub?.user_uuid === $userUuid
+          );
+
+          const userCurrentCode = processedSubmissions[0]?.code;
+
+          code = userCurrentCode;
+
+          const assignmentId =
+            processedSubmissions[0]?.programming_assignment_id;
+
+          const index = $assignments.map((i) => i.id).indexOf(assignmentId);
+
+          gradeTally.set(points);
+
+          assignmentIndex.set(index);
+
+          isLoading = false;
+
+          clearInterval(interval);
+        }
+        isLoading = false;
 
         clearInterval(interval);
       }
@@ -120,7 +118,45 @@
     return () => clearInterval(interval);
   });
 
-  
+  const userWithSubmission = async () => {
+    const userSubmissions = await assignmentService.fetchAllUserSubmission(
+      $userUuid
+    );
+
+    const userGradedSubmissions = userSubmissions.filter(
+      (json) => json?.status === 'processed' && json?.grader_feedback !== null
+    );
+
+    const countSub1 = userSubmissions?.filter(
+      (sub) =>
+        sub?.programming_assignment_id === 1 &&
+        sub?.status === 'processed' &&
+        sub?.correct
+    ).length;
+    const countSub2 = userSubmissions?.filter(
+      (sub) =>
+        sub?.programming_assignment_id === 2 &&
+        sub?.status === 'processed' &&
+        sub?.correct
+    ).length;
+    const countSub3 = userSubmissions?.filter(
+      (sub) =>
+        sub?.programming_assignment_id === 3 &&
+        sub?.status === 'processed' &&
+        sub?.correct
+    ).length;
+
+    const sub1 = countSub1 > 0 ? 100 : 0;
+    const sub2 = countSub2 > 0 ? 100 : 0;
+    const sub3 = countSub3 > 0 ? 100 : 0;
+
+    const points = sub1 + sub2 + sub3;
+
+    gradeTally.set(points);
+
+    $submissions = userGradedSubmissions;
+  };
+
   const submitAnswer = async () => {
     const createSubmission = await assignmentService.createSubmission(
       $userUuid,
@@ -131,7 +167,6 @@
     const userExists = await assignmentService.checkUserExists($userUuid);
 
     if (userExists?.exists) {
-      answerCount = ++answerCount;
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
       $userUuid = createSubmission?.user_uuid;
 
@@ -155,6 +190,8 @@
         );
 
         $submissions = [...$submissions, addedUpdatedSubmission];
+
+        await userWithSubmission();
 
         code =
           createSubmission?.result === 'passes test'
@@ -195,7 +232,7 @@
   });
 
   const unsubscribeAssignments = assignments.subscribe((currentValue) => {
-   localStorage.setItem('assignments', JSON.stringify(currentValue));
+    localStorage.setItem('assignments', JSON.stringify(currentValue));
   });
 
   const unsubscribeAnswers = assignments.subscribe((currentValue) => {

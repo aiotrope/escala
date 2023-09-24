@@ -11,7 +11,7 @@
     <div class="text-sm lg:flex-grow">
       {#if !$userUuid}
         <span
-          class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4 animate__animated animate__fadeOut animate__infinite"
+          class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4 animate__animated animate__flipInX animate__infinite"
         >
           Initializing...
         </span>
@@ -27,7 +27,7 @@
       {#if !$userUuid}
         <span
           title="points"
-          class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0 animate__animated animate__fadeOut animate__infinite"
+          class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0 animate__animated animate__flipInX animate__infinite"
           >Initializing...</span
         >
       {:else}
