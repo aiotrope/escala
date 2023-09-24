@@ -9,19 +9,34 @@
 
   <div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
     <div class="text-sm lg:flex-grow">
-      <span
-        href="#responsive-header"
-        class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4"
-      >
-        User: {$userUuid}
-      </span>
+      {#if !$userUuid}
+        <span
+          class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4 animate__animated animate__fadeOut animate__infinite"
+        >
+          Initializing...
+        </span>
+      {:else}
+        <span
+          class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4"
+        >
+          User: {$userUuid}
+        </span>
+      {/if}
     </div>
     <div>
-      <span
-        title="points"
-        class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0"
-        >Points: {$gradeTally}</span
-      >
+      {#if !$userUuid}
+        <span
+          title="points"
+          class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0 animate__animated animate__fadeOut animate__infinite"
+          >Initializing...</span
+        >
+      {:else}
+        <span
+          title="points"
+          class="inline-block text-sm px-4 py-2 leading-none border rounded text-white border-white mt-4 lg:mt-0"
+          >Points: {$gradeTally}</span
+        >
+      {/if}
     </div>
   </div>
 </nav>

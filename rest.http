@@ -67,3 +67,7 @@ DELETE http://localhost:7800/api/assignments/submissions/user/51c7ca31-0a88-48f6
 Content-Type: application/json
 
 
+### generate uuid
+GET http://localhost:7800/api/assignments/user/uuid
+
+

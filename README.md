@@ -7,7 +7,7 @@ DBSWA: Project 1
 ```bash
 # buid docker images based on docker-compose on production mode; running on port 7800
 # remove app-cache from previous debug mode before proceeding
-cd escala && docker compose -f docker-compose.prod.yml up -d
+cd escala && docker compose -f docker-compose.prod.yml up -d --build
 # to restart or rebuild on prod mode; running on port 7800
 docker compose -f docker-compose.prod.yml up -d
 

@@ -1,7 +1,11 @@
 const findAllAnswers = async () => {
   const response = await fetch('/api/answers');
 
-  return await response.json();
+  const jsonData = await response.json();
+
+  if (jsonData.length || jsonData !== undefined) {
+    return jsonData;
+  }
 };
 const checkUserExists = async (uuid) => {
   const response = await fetch(`/api/user/${uuid}`);
@@ -29,10 +33,12 @@ const fetchAllUserSubmission = async (userUuid) => {
 
   const jsonData = await response.json();
 
-  if (jsonData.length > 0) {
+  if (jsonData.length || jsonData !== undefined) {
     const userGradedSubmissions = jsonData.filter(
       (json) => json?.status === 'processed' && json?.grader_feedback !== null
     );
+
+    localStorage.setItem('submissions', JSON.stringify(userGradedSubmissions));
 
     return userGradedSubmissions;
   } else {
@@ -150,16 +156,40 @@ const updateSubmission = async (createdSubmission) => {
 const fetchAllAssignments = async () => {
   const response = await fetch('/api/assignments');
 
-  return await response.json();
+  const jsonData = await response.json();
+
+  if (jsonData.length || jsonData !== undefined) {
+    localStorage.setItem('assignments', JSON.stringify(jsonData));
+  }
+  return jsonData;
 };
 
-const fetchCurrentUserSavedOnDb = async (userUuid) => {
-  const response = await fetch(`/api/user/${userUuid}`);
+const getUser = async () => {
+  const answers = await fetch('/api/answers');
 
-  return await response.json();
+  const uuid = await fetch('/api/assignments/user/uuid');
+
+  const jsonAnswers = await answers.json();
+
+  const jsonUuid = await uuid.json();
+
+  let user;
+  if (jsonAnswers.length > 0 && jsonAnswers !== undefined) {
+    const latestUserToAnswer = jsonAnswers.filter(
+      (sub) => sub.status === 'processed'
+    );
+
+    const userOnDb = latestUserToAnswer[0]?.user_uuid;
+
+    user = userOnDb;
+  } else {
+    user = jsonUuid?.uuid;
+  }
+
+  localStorage.setItem('userUuid', JSON.stringify(user));
+
+  return user;
 };
-
-
 
 const assignmentService = {
   checkUserExists,
@@ -169,11 +199,10 @@ const assignmentService = {
   fetchAllUserSubmission,
   updateSubmission,
   fetchAllAssignments,
-  fetchCurrentUserSavedOnDb,
   gradeSubmission,
   gradeSubmissionPromise,
   findAllAnswers,
-
+  getUser,
 };
 
 export default assignmentService;

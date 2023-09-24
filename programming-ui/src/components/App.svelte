@@ -13,7 +13,9 @@
 
   import assignmentService from '../services/assignmentService.js';
 
+  import Handout from './Handout.svelte';
   import Form from './Form.svelte';
+  import Loader from './Loader.svelte';
 
   // let assignmentIndex = 0;
 
@@ -21,65 +23,63 @@
 
   let currentUserOnDb;
 
-  let currentSubmissions;
-
   let currentGradeTally;
 
   let isInCorrect = true;
 
-  let currentUserUuid;
-
   let currentAssignmentIndex;
 
+  let currentAnswers;
+
   let answerCount = 0;
+
+  let isLoading = true;
 
   $: answerAdded = answerCount;
 
   onMount(async () => {
-    let fetchInterval = setInterval(async () => {
+    const interval = setInterval(async () => {
       const allAssignments = await assignmentService.fetchAllAssignments();
-
-      const allAnswers = await assignmentService.findAllAnswers();
-
-      const userSubmissions = await assignmentService.fetchAllUserSubmission(
-        $userUuid
-      );
-
-      const userSavedOnDb = await assignmentService.fetchCurrentUserSavedOnDb(
-        $userUuid
-      );
-
-      userOnDb.set(userSavedOnDb);
 
       assignments.set(allAssignments);
 
-      answers.set(allAnswers);
+      if ($assignments.length) {
+        const setUserId = await assignmentService.getUser();
 
-      if (allAnswers.length > 0 && allAnswers !== undefined) {
-        $userUuid = allAnswers[0]?.user_uuid;
+        const allAnswers = await assignmentService.findAllAnswers();
 
-        const userGradedSubmissions = userSubmissions.filter(
-          (json) =>
-            json?.status === 'processed' && json?.grader_feedback !== null
+        const userSubmissions = await assignmentService.fetchAllUserSubmission(
+          $userUuid
         );
 
-        const countSub1 = userSubmissions.filter(
+         const userSavedOnDb = await assignmentService.checkUserExists(
+          $userUuid
+        );
+
+     /*    const userGradedSubmissions = userSubmissions.filter(
+          (json) =>
+            json?.status === 'processed' && json?.grader_feedback !== null
+        ); */
+
+       
+
+       /*  const countSub1 = userSubmissions?.filter(
           (sub) =>
-            sub.programming_assignment_id === 1 &&
-            sub.status === 'processed' &&
-            sub.correct
+            sub?.programming_assignment_id === 1 &&
+            sub?.status === 'processed' &&
+            sub?.correct
         ).length;
-        const countSub2 = userSubmissions.filter(
+        const countSub2 = userSubmissions?.filter(
           (sub) =>
-            sub.programming_assignment_id === 2 &&
-            sub.status === 'processed' &&
-            sub.correct
+            sub?.programming_assignment_id === 2 &&
+            sub?.status === 'processed' &&
+            sub?.correct
         ).length;
-        const countSub3 = userSubmissions.filter(
+        const countSub3 = userSubmissions?.filter(
           (sub) =>
-            sub.programming_assignment_id === 3 &&
-            sub.status === 'processed' &&
-            sub.correct
+            sub?.programming_assignment_id === 3 &&
+            sub?.status === 'processed' &&
+            sub?.correct
         ).length;
 
         const sub1 = countSub1 > 0 ? 100 : 0;
@@ -88,34 +88,39 @@
 
         const points = sub1 + sub2 + sub3;
 
-        const processedSubmissions = allAnswers.filter(
-          (sub) => sub.status === 'processed' && sub.user_uuid === $userUuid
+        const processedSubmissions = allAnswers?.filter(
+          (sub) => sub?.status === 'processed' && sub?.user_uuid === $userUuid
         );
+
+        const userCurrentCode = processedSubmissions[0]?.code;
+
+        code = userCurrentCode;
 
         const assignmentId = processedSubmissions[0]?.programming_assignment_id;
 
-        const userCurrentGrade = processedSubmissions[0].grader_feedback
+        const index = $assignments.map((i) => i.id).indexOf(assignmentId); */
 
-        const evaluate =
-          userCurrentGrade === 'passes test' ? assignmentId + 1 : assignmentId;
+        userUuid.set(setUserId);
 
-        const index = $assignments.map((i) => i.id).indexOf(evaluate);
+        answers.set(allAnswers);
 
-        gradeTally.set(points);
+        userOnDb.set(userSavedOnDb);
 
-        submissions.set(userGradedSubmissions);
+        // gradeTally.set(points);
 
-        assignmentIndex.set(index);
+        submissions.set(userSubmissions);
+
+        isLoading = false;
+
+        // assignmentIndex.set(index);
+
+        clearInterval(interval);
       }
-    }, 2000);
-
-    return () => {
-      clearInterval(fetchInterval);
-    };
+    }, 3000);
+    return () => clearInterval(interval);
   });
 
   
-
   const submitAnswer = async () => {
     const createSubmission = await assignmentService.createSubmission(
       $userUuid,
@@ -128,8 +133,7 @@
     if (userExists?.exists) {
       answerCount = ++answerCount;
       userOnDb.update((currentData) => ({ ...currentData, ...userExists }));
-
-      // userUuid.update(createSubmission?.user_uuid);
+      $userUuid = createSubmission?.user_uuid;
 
       const userLatestSubmission = await assignmentService.findSubmissionById(
         createSubmission?.id
@@ -137,7 +141,7 @@
 
       isInCorrect = createSubmission?.result === 'passes test' ? false : true;
 
-      const foundCodeAndAssignmentDuplicate = currentSubmissions.find(
+      const foundCodeAndAssignmentDuplicate = $submissions.find(
         (sub) =>
           sub?.id !== userLatestSubmission?.id &&
           sub.code === userLatestSubmission?.code &&
@@ -146,7 +150,11 @@
       );
 
       if (!foundCodeAndAssignmentDuplicate) {
-        await assignmentService.updateSubmission(createSubmission);
+        const addedUpdatedSubmission = await assignmentService.updateSubmission(
+          createSubmission
+        );
+
+        $submissions = [...$submissions, addedUpdatedSubmission];
 
         code =
           createSubmission?.result === 'passes test'
@@ -164,73 +172,66 @@
     $assignmentIndex %= $assignments.length;
   };
 
-  let unsubscribeUserOnDb = userOnDb.subscribe((currentValue) => {
+  const unsubscribeUserOnDb = userOnDb.subscribe((currentValue) => {
     currentUserOnDb = currentValue;
   });
 
-  let unsubscribeSubmission = submissions.subscribe((currentValue) => {
-    currentSubmissions = currentValue;
+  submissions.subscribe((currentValue) => {
+    localStorage.setItem('submissions', JSON.stringify(currentValue));
   });
 
-  let unsubscribeGradeTally = gradeTally.subscribe((currentValue) => {
+  const unsubscribeGradeTally = gradeTally.subscribe((currentValue) => {
     currentGradeTally = currentValue;
   });
 
-  let unsubscribeUserUuid = userUuid.subscribe((currentValue) => {
-    currentUserUuid = currentValue;
+  const unsubscribeAssignmentIndex = assignmentIndex.subscribe(
+    (currentValue) => {
+      currentAssignmentIndex = currentValue;
+    }
+  );
+
+  userUuid.subscribe((currentValue) => {
+    localStorage.setItem('userUuid', JSON.stringify(currentValue));
   });
 
-  let unsubscribeAssignmentIndex = assignmentIndex.subscribe((currentValue) => {
-    currentAssignmentIndex = currentValue;
+  const unsubscribeAssignments = assignments.subscribe((currentValue) => {
+   localStorage.setItem('assignments', JSON.stringify(currentValue));
+  });
+
+  const unsubscribeAnswers = assignments.subscribe((currentValue) => {
+    currentAnswers = currentValue;
   });
 
   onDestroy(unsubscribeUserOnDb);
 
-  onDestroy(unsubscribeSubmission);
-
   onDestroy(unsubscribeGradeTally);
-
-  onDestroy(unsubscribeUserUuid);
 
   onDestroy(unsubscribeAssignmentIndex);
 
-  $: console.log(currentAssignmentIndex);
+  onDestroy(unsubscribeAnswers);
+
+  onDestroy(unsubscribeAssignments);
 </script>
 
 <div class="md:w-2/5">
-  <div class="my-5">
-    <p>
-      There are {$assignments.length} Python problem sets needed to be answered.
-    </p>
-  </div>
+  {#if isLoading}
+    <Loader />
+  {:else}
+    <Handout />
+    <section>
+      <Form
+        bind:value={code}
+        {submitAnswer}
+        {updateIndex}
+        {isInCorrect}
+        {currentAssignmentIndex}
+      />
+    </section>
 
-  <h1 class="text-2xl mb-5">
-    Problem # {$assignments[$assignmentIndex]?.assignment_order}: {$assignments[
-      $assignmentIndex
-    ]?.title}
-  </h1>
-  <section class="mt-2 mb-8">
-    <p class="text-xl my-2">Problem Handout</p>
-    <p class="text-base my-2 md:text-lg">
-      {$assignments[$assignmentIndex]?.handout}
-    </p>
-  </section>
+    <section>
+      <h3>User submissions</h3>
+      <p>Current User exists: {currentUserOnDb?.exists}</p>
 
-  <section>
-    <Form
-      bind:value={code}
-      {submitAnswer}
-      {updateIndex}
-      {isInCorrect}
-      {currentAssignmentIndex}
-    />
-  </section>
-
-  <section>
-    <h3>User submissions</h3>
-    <p>Current User exists: {currentUserOnDb?.exists}</p>
-
-    {#if $submissions?.length}
       <div>
         {#each $submissions as data}
           <p class={`${data.correct ? 'text-green-500' : 'text-red-500'}`}>
@@ -238,11 +239,6 @@
           </p>
         {/each}
       </div>
-    {:else}
-      <p>
-        There are {$assignments.length} Python problem sets needed to be answered.
-      </p>
-    {/if}
-  </section>
-  {currentAssignmentIndex}
+    </section>
+  {/if}
 </div>

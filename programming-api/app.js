@@ -2,8 +2,6 @@ import { pLimit } from './deps.js';
 import * as programmingAssignmentService from './services/programmingAssignmentService.js';
 import { cacheMethodCalls } from './util/cacheUtil.js';
 
-
-
 const limit = pLimit(99);
 
 const nonidenticalSubmissions = [];
@@ -271,7 +269,11 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
   }
 };
 
-
+const handleGenerateUuid = async () => {
+  const generate = crypto.randomUUID();
+  const uuid = generate;
+  return Response.json({ uuid: uuid }, { status: 200 });
+};
 
 const urlMapping = [
   {
@@ -333,7 +335,13 @@ const urlMapping = [
     }),
     fn: handleGetUserLatestSubmission,
   },
-  
+  {
+    method: 'GET',
+    pattern: new URLPattern({
+      pathname: '/assignments/user/uuid',
+    }),
+    fn: handleGenerateUuid,
+  },
 ];
 
 const handleRequest = async (request) => {
