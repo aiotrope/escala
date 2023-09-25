@@ -1,9 +1,9 @@
 <script>
+  import { assignmentIndex } from "../stores/stores";
   export let value;
   export let submitAnswer;
   export let updateIndex;
   export let isInCorrect;
-  export let currentAssignmentIndex;
 </script>
 
 <form>
@@ -42,7 +42,7 @@
     data-testid="next-problem-btn"
   >
     {isInCorrect
-      ? `Working on problem #: ${currentAssignmentIndex + 1}`
+      ? `Working on problem #: ${$assignmentIndex + 1}`
       : 'Answer next assignment'}
   </button>
 </form>

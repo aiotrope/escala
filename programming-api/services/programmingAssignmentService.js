@@ -100,9 +100,6 @@ const gradeSubmission = async (submission) => {
   }
 };
 
-
-
-
 export {
   findAll,
   findOne,

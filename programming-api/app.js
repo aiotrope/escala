@@ -13,14 +13,10 @@ const cachedProgrammingAssignmentService = cacheMethodCalls(
 );
 
 //* fetch all assignments
-const handleFindAll = async () => {
-  try {
-    const assignments = await cachedProgrammingAssignmentService.findAll();
+const handleFindAll = async (request) => {
+  const assignments = await cachedProgrammingAssignmentService.findAll();
 
-    return Response.json(assignments, { status: 200 });
-  } catch (err) {
-    return new Response(err.message, { status: 422 });
-  }
+  return Response.json(assignments, { status: 200 });
 };
 
 //* get assignments by id
@@ -175,7 +171,7 @@ const handleGrading = async (request, urlPatternResult) => {
   }
 };
 
-const handleGetAllAnswers = async () => {
+const handleGetAllAnswers = async (request) => {
   try {
     const answers = await cachedProgrammingAssignmentService.getAllAnswers();
 
@@ -269,7 +265,7 @@ const handleGetUserLatestSubmission = async (request, urlPatternResult) => {
   }
 };
 
-const handleGenerateUuid = async () => {
+const handleGenerateUuid = async (request) => {
   const generate = crypto.randomUUID();
   const uuid = generate;
   return Response.json({ uuid: uuid }, { status: 200 });
@@ -341,7 +337,7 @@ const urlMapping = [
       pathname: '/assignments/user/uuid',
     }),
     fn: handleGenerateUuid,
-  },
+  }
 ];
 
 const handleRequest = async (request) => {

@@ -3,7 +3,8 @@ const findAllAnswers = async () => {
 
   const jsonData = await response.json();
 
-  if (jsonData.length || jsonData !== undefined) {
+  if (jsonData.length > 0) {
+    localStorage.setItem('answers', JSON.stringify(jsonData));
     return jsonData;
   }
 };
@@ -33,7 +34,7 @@ const fetchAllUserSubmission = async (userUuid) => {
 
   const jsonData = await response.json();
 
-  if (jsonData.length || jsonData !== undefined) {
+  if (jsonData.length > 0) {
     const userGradedSubmissions = jsonData.filter(
       (json) => json?.status === 'processed' && json?.grader_feedback !== null
     );
@@ -176,7 +177,7 @@ const getUser = async () => {
   let user;
   if (jsonAnswers.length > 0 && jsonAnswers !== undefined) {
     const latestUserToAnswer = jsonAnswers.filter(
-      (sub) => sub.status === 'processed'
+      (sub) => sub.status === 'processed' && sub.grader_feedback !== null
     );
 
     const userOnDb = latestUserToAnswer[0]?.user_uuid;
