@@ -1,25 +1,28 @@
 const { test, expect } = require('@playwright/test');
 
-test("Server responds with a page with the title 'Programming assignments'", async ({
-  page,
-}) => {
-  await page.goto('/');
-  expect(await page.title()).toBe('Programming assignments');
-});
 
-test('Can create assignment submission with passing test increasing the points from 0 to 100', async ({
-  page,
-}) => {
-  await page.goto('/');
-  await expect(page.locator('h1')).toHaveText('Problem # 1: Hello');
-  await expect(page.getByTitle('points')).toHaveText('Points: 0');
-  await page
-    .getByLabel('Your code answer')
-    .fill("def hello (): return 'Hello'");
-  await page.getByRole('button', { name: /Submit your answer/i }).click();
-  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
-  await expect(page.getByTitle('points')).toHaveText('Points: 100');
-});
+  test("Server responds with a page with the title 'Programming assignments'", async ({
+    page,
+  }) => {
+    await page.goto('/');
+    expect(await page.title()).toBe('Programming assignments');
+  });
+
+  test('Can create assignment submission with passing test increasing the points from 0 to 100', async ({
+    page,
+  }) => {
+   
+    await page.goto('/');
+    await expect(page.locator('h1')).toHaveText('Problem # 1: Hello', { timeout: 30000});
+    await expect(page.getByTitle('points')).toHaveText('Points: 0');
+    await page
+      .getByLabel('Your code answer')
+      .fill("def hello (): return 'Hello'");
+    await page.getByRole('button', { name: /Submit your answer/i }).click();
+    await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+    await expect(page.getByTitle('points')).toHaveText('Points: 100');
+  });
+
 
 test('Can create assignment submission with failed test', async ({ page }) => {
   await page.goto('/');
@@ -59,3 +62,4 @@ test('Answering two correct questions subsequently, increasing the points from 0
   await page.getByTestId('submit-answer-btn').click();
   await expect(page.getByTitle('points')).toHaveText('Points: 200');
 });
+

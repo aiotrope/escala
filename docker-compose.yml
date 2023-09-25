@@ -93,3 +93,14 @@ services:
       - nginx
     volumes:
       - ./e2e-playwright/tests:/e2e-playwright/tests
+
+  grader-image:
+    build:
+      context: grader-image
+      dockerfile: Dockerfile
+    image: grader-image
+    restart: on-failure
+    depends_on:
+      - database
+      - programming-api
+  

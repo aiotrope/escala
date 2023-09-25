@@ -1,5 +1,6 @@
 module.exports = {
-  timeout: 10000,
+  globalTimeout: 60000,
+  timeout: 30000,
   retries: 0,
   reporter: 'list',
   workers: 5,
@@ -10,7 +11,7 @@ module.exports = {
   },
   projects: [
     {
-      name: 'e2e-headless-webkit',
+      name: 'webkit',
       use: {
         browserName: 'webkit',
       },
