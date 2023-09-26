@@ -1,65 +1,60 @@
 const { test, expect } = require('@playwright/test');
 
+test("Server responds with a page with the title 'Programming assignments'", async ({
+  page,
+}) => {
+  await page.goto('/');
+  expect(await page.title()).toBe('Programming assignments');
+});
 
-  test("Server responds with a page with the title 'Programming assignments'", async ({
-    page,
-  }) => {
-    await page.goto('/');
-    expect(await page.title()).toBe('Programming assignments');
-  });
+test('Sequential points and assignments increment, points starts at 0 and ends at 200; all passing test', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('h1')).toHaveText('Problem # 1: Hello');
+  await expect(page.getByTitle('points')).toHaveText('Points: 0');
+  await page
+    .getByLabel('Your code answer')
+    .fill("def hello (): return 'Hello'");
+  await page.getByRole('button', { name: /Submit your answer/i }).click();
+  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+  await expect(page.getByTitle('points')).toHaveText('Points: 100');
+  await page.getByTestId('next-problem-btn').click();
+  await expect(page.locator('h1')).toHaveText('Problem # 2: Hello world');
+  await page
+    .getByLabel('Your code answer')
+    .fill("def hello (): return 'Hello world!'");
+  await page.getByRole('button', { name: /Submit your answer/i }).click();
+  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+  await expect(page.getByTitle('points')).toHaveText('Points: 200');
+});
 
-  test('Can create assignment submission with passing test increasing the points from 0 to 100', async ({
-    page,
-  }) => {
-   
-    await page.goto('/');
-    await expect(page.locator('h1')).toHaveText('Problem # 1: Hello', { timeout: 30000});
-    await expect(page.getByTitle('points')).toHaveText('Points: 0');
-    await page
-      .getByLabel('Your code answer')
-      .fill("def hello (): return 'Hello'");
-    await page.getByRole('button', { name: /Submit your answer/i }).click();
-    await expect(page.locator('p.text-green-500')).toHaveText('Correct');
-    await expect(page.getByTitle('points')).toHaveText('Points: 100');
-  });
-
-
-test('Can create assignment submission with failed test', async ({ page }) => {
+test('Respond "Incorect" on failed test', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Your code answer').fill("def hello (): return 'Hi!'");
   await page.getByRole('button', { name: /Submit your answer/i }).click();
   await expect(page.locator('p.text-red-500')).toHaveText('Incorrect');
 });
 
-test('Submission with passing text and enable the next button with confirming the user is on the next new assignment', async ({
+test('Respond "Correct" on passing test', async ({ page }) => {
+  await page.goto('/');
+  await page
+    .getByLabel('Your code answer')
+    .fill("def hello (): \n    hello = 'Hello world!' \n    return hello");
+  await page.getByRole('button', { name: /Submit your answer/i }).click();
+  await expect(page.locator('p.text-green-500')).toHaveText('Correct');
+});
+
+test('Passes test will allow user to move to next assignment', async ({
   page,
 }) => {
   await page.goto('/');
   await page
     .getByTestId('input-answer')
-    .fill("def hello (): \n    hello = 'Hello' \n    return hello");
+    .fill("def hello (): \n    sample = 'Hello world!' \n    return sample");
   await page.getByTestId('submit-answer-btn').click();
   await expect(page.locator('p.text-green-500')).toHaveText('Correct');
-  await page.getByTestId('next-problem-btn').click();
   await expect(page.locator('h1')).toHaveText('Problem # 2: Hello world');
-});
-
-test('Answering two correct questions subsequently, increasing the points from 0 to 200. Correct answer will increase the points and enable the next button to the new question', async ({
-  page,
-}) => {
-  await page.goto('/');
-  await expect(page.getByTitle('points')).toHaveText('Points: 0');
-  await page
-    .getByLabel('Your code answer')
-    .fill("def hello (): \n    sample = 'Hello' \n    sample hello");
-  await page.getByRole('button', { name: /Submit your answer/i }).click();
-  await expect(page.getByTitle('points')).toHaveText('Points: 100');
   await page.getByTestId('next-problem-btn').click();
-  await expect(page.locator('h1')).toHaveText('Problem # 2: Hello world');
- await page
-   .getByLabel('Your code answer')
-   .fill("def hello (): \n    sample = 'Hello world!' \n    sample hello");
-  await page.getByTestId('submit-answer-btn').click();
-  await expect(page.getByTitle('points')).toHaveText('Points: 200');
+  await expect(page.locator('h1')).toHaveText('Problem # 3: Sum');
 });
-

@@ -8,7 +8,7 @@
   </p>
 </div>
 
-<h1 class="text-2xl mb-5">
+<h1 class="text-2xl mb-5" id="problem">
   Problem # {$assignments[$assignmentIndex]?.assignment_order}: {$assignments[
     $assignmentIndex
   ]?.title}

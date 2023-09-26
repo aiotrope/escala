@@ -30,11 +30,11 @@
   let isLoading = true;
 
   onMount(async () => {
-    await initialize();
+    await initialize1();
   });
 
-  const initialize = async () => {
-    const timer = setTimeout(async () => {
+  const initialize1 = async () => {
+    const interval = setInterval(async () => {
       const allAssignments = await assignmentService.fetchAllAssignments();
 
       const setUserId = await assignmentService.getUser();
@@ -57,16 +57,13 @@
 
       submissions.set(userSubmissions);
 
-      console.clear();
-
-      isLoading = false;
-
       if (
-        $userOnDb?.exists &&
-        $submissions.length > 0 &&
-        $userUuid !== null &&
-        $submissions !== null
+        userSavedOnDb?.exists &&
+        userSubmissions.length > 0 &&
+        setUserId !== null &&
+        userSubmissions !== null
       ) {
+        clearInterval(interval);
         const processedSubmissions = $submissions?.filter(
           (sub) => sub?.status === 'processed' && sub?.grader_feedback !== null
         );
@@ -88,9 +85,17 @@
         await setPoints();
 
         isLoading = false;
+        console.clear();
       }
-    }, 30000);
-    return () => clearTimeout(timer);
+
+      if (allAssignments.length > 0 && setUserId !== null) {
+        clearInterval(interval);
+        isLoading = false;
+        console.clear();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   };
 
   const setPoints = async () => {
@@ -241,20 +246,13 @@
       <p>Current User exists: {currentUserOnDb?.exists}</p>
 
       <div>
-        <!--  {#each $submissions as data}
-          <p class={`${data.correct ? 'text-green-500' : 'text-red-500'}`}>
-            {data?.correct ? 'Correct' : 'Incorrect'} - {data?.grader_feedback}
-          </p>
-        {/each} -->
-
         {#if $submissions.length}
           <p
             class={`${
               $submissions[0].correct ? 'text-green-500' : 'text-red-500'
             }`}
           >
-            {$submissions[0]?.correct ? 'Correct' : 'Incorrect'} - {$submissions[0]
-              ?.grader_feedback}
+            {$submissions[0]?.correct ? 'Correct' : 'Incorrect'}
           </p>
         {/if}
       </div>
