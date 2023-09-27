@@ -153,8 +153,3 @@ GET/api/assignments/user/uuid
 | `Implementing Redis Stream`                                                                                                                                      |  `not implemented` |
 | `Database queries are cached`                                                                                                                                    |  `done`            |
 | `Applying Tailwind CSS on UI development`                                                                                                                        |  `done`            |
-
-
-### Author
-
-Arnel Imperial
