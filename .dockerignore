@@ -1,4 +1,4 @@
-node_modules
+node_modules/
 build
 dist
 .git
@@ -7,7 +7,7 @@ dist
 .DS_Store
 .vscode
 
-logs
+logs/
 *.log
 
 Dockerfile
@@ -15,6 +15,7 @@ Dockerfile.*
 .dockerignore
 docker-compose.prod.yml
 docker-compose.yml
+k6/
 performance-test-add-submission.js
 performance-test-load-assignments.js
 
@@ -22,3 +23,4 @@ example.*
 .env
 project.env
 rest.http
+LICENSE

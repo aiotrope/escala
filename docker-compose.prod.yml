@@ -130,23 +130,11 @@ services:
     expose:
       - 6379
   
-  e2e-playwright:
-    entrypoint: "/bin/true"
-    build: e2e-playwright
-    image: e2e-playwright
-    depends_on:
-      - nginx
-    volumes:
-      - ./e2e-playwright/tests:/e2e-playwright/tests
-    networks:
-      - backnet
-      - frontnet
-  
   grader-image:
     build:
       context: grader-image
-      dockerfile: Dockerfile
-    image: grader-image
+      dockerfile: Dockerfile.prod
+    image: grader-image-prod
     restart: on-failure
     depends_on:
       - database

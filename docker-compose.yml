@@ -15,7 +15,9 @@ services:
       - 7800:7800
 
   programming-api:
-    build: programming-api
+    build:
+      context: programming-api
+      dockerfile: Dockerfile
     image: programming-api
     restart: "no"
     volumes:
@@ -31,7 +33,9 @@ services:
       - project.env
 
   programming-ui:
-    build: programming-ui
+    build:
+      context: programming-ui
+      dockerfile: Dockerfile
     image: programming-ui
     restart: "no"
     volumes:
@@ -43,7 +47,9 @@ services:
       - programming-api
 
   grader-api:
-    build: grader-api
+    build:
+      context: grader-api
+      dockerfile: Dockerfile
     image: grader-api
     restart: "no"
     volumes:
@@ -85,9 +91,11 @@ services:
       - 6379
   
   e2e-playwright:
-    entrypoint: "/bin/true"
-    build: e2e-playwright
+    build:
+      context: e2e-playwright
+      dockerfile: Dockerfile
     image: e2e-playwright
+    entrypoint: "/bin/true"
     network_mode: host
     depends_on:
       - nginx
