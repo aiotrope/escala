@@ -40,12 +40,6 @@ http_req_duration - median: 1.24s
 
 http_req_duration - 99th percentile: 2.21s
 
-## Reflection
-
-Brief reflection on the results of the tests
-
-The app with and without Redis caching has the same result for retrieving assignments from database. While the application without caching for adding submission, has higher request rate and faster request duration compared to cached application. Both of the test has 99 virtual users and no failed requests. 
-
 ### Details
 
 #### Retrieving assignments
