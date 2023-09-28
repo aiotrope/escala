@@ -1,4 +1,4 @@
-# Designing and Building Scalable Web Applications Course Project I
+# escala
 
 An application for answering a series of three of Python problem. Each submission will be evaluated for a grade or feedback if the submission is correct or incorrect. Each submission also requires a unique set of code otherwise the submission will not be graded. Correct answer to a problem will allow user to move to next assignment by enabling the next action button. Correct answer also increase the points to 100 and the maximum perfect score is 300. Notification for incorrect answer is "Incorrect" and "Correct" for every correct answer. Every submission will automatically update the grader_feedback, status and correct attributes of programming_assignment_submissions table as long as code is unique pertaining to the last submission on respective assignment. On production mode of the app, the next time the user launches the application, they can pick up where they left off with the initial task.
 
